@@ -10,7 +10,7 @@ For each reading assignment, write one page describing your experience[^your_exp
 
 [^your_experience]: Answer this question: What is most important thing for _you_ to say about this reading? Was the reading useless?
 
-For each programming assignment, submit your code by pushing it to your [Github] repository for this class. Unless the assignment specifies otherwise, submit your programming assignment solution as a single _.cpp_ placed in a folder named _assignement_.
+For each programming assignment, submit your code by pushing it to your [Github] repository for this class. Unless the assignment specifies otherwise, submit your programming assignment solution as a single _.cpp_ placed in a folder named _assignment_.
 
 </section>
 
