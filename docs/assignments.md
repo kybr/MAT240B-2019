@@ -16,7 +16,7 @@ For each programming assignment, submit your code by pushing it to your [Github]
 
 ## Assignment 0
 
-Read and study _The Synthesis of Complex Audio Spectra by Means of Frequency Modulation (Chowning 1973)_ and _Stilson/Alias-Free Digital Synthesis of Classic Analog Waveforms (Stilson 1996)_
+Read and study _The Synthesis of Complex Audio Spectra by Means of Frequency Modulation (Chowning 1973)_ and _Alias-Free Digital Synthesis of Classic Analog Waveforms (Stilson 1996)_
 
 Write a C++ program that accepts sentences typed on the terminal, printing each sentence with its words reversed[^words_reversed]. You may start with the code below.
 
