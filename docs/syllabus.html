@@ -32,24 +32,110 @@
 <p class="byline">January 8, 2019 &ndash; Karl Yerkes</p>
 </header>
 <section>
-<p>This course is a hands-on introduction to developing interactive audiovisual applications for full-surround virtual environments. Over the course of ten weeks, students develop software-based multiuser experiences, exploring selected aspects of 3D graphics, distributed computing, interactive simulation, and spatial audio. Other topics include: C++, Git, and object-oriented programming.</p>
+<p>This course surveys established techniques for audio synthesis and digital signal processing applied to sound. We explore and implement additive, subtractive, frequency modulation and granular synthesis techniques and we cover digital audio effects such as reverb, filter, phase vocoder, and dynamic range compression.</p>
 </section>
-<section id="grading" class="level1">
-<h1>Grading</h1>
-<hr />
-<p>50% Homework assignments and reading responses</p>
-<hr />
-<p>50% Final project milestones</p>
-<hr />
-</section>
-<section id="final-project" class="level1">
-<h1>Final Project</h1>
-<p>Submit a final project in the form of an original, open source software project as well as the proposal, documentation, and public demonstration thereof. With this project, you demonstrate your understanding of the subject.</p>
-</section>
-<section id="schedule" class="level1">
-<h1>Schedule</h1>
+<p>Languages, frameworks, and tools:</p>
 <ul>
-<li>Week 1-5: Programming homeworks and reading assignments</li>
+<li>C++: Gamma, SDL2, AlloSystem</li>
+<li>Cycling ’74 Max and gen~</li>
+<li>Javascript: genish.js and gibber</li>
+<li>DAW: Adobe Audition and/or Audacity</li>
+</ul>
+<section id="readings" class="level3">
+<h3>Readings</h3>
+<p>Students may read and report on excerpts from the following materials:</p>
+<ul>
+<li><em>Computer Music: Synthesis, Composition, and Performance</em> (Dodge and Jerse 1985/1997)</li>
+<li><em>Microsound</em> (Roads 2001)</li>
+<li><em>Real Sound Synthesis for Interactive Applications</em> (Cook 2002)</li>
+<li><em>The Theory and Technique of Electronic Music</em> (Pucket 2006)</li>
+<li><em>Numerical Sound Synthesis: Finite Difference Schemes and Simulation in Musical Acoustics</em> (Bilboa 2009)</li>
+<li><em>The Musical Art of Synthesis</em> (McGuire and Nathan Van der Rest 2016)</li>
+<li><em>The Audio Programming Book</em> (Boulanger and Lazzarini, eds. 2011)</li>
+<li><p><em>Designing Sound</em> (Farnell 2010)</p></li>
+<li><em>The Synthesis of Complex Audio Spectra by Means of Frequency Modulation</em> (Chowning 1973)</li>
+<li><em>Alias-Free Digital Synthesis of Classic Analog Waveforms</em> (Stilson and Smith 1996)</li>
+<li><em>Hard sync without aliasing</em> (Brandt 2001)</li>
+<li><em>Oscillator and Filter Algorithms for Virtual Analog Synthesis</em> (Välimäki and Huovilainen 2006)</li>
+<li><em>Adaptive Phase Distortion Synthesis</em> (Lazzarini and Välimäki 2009)</li>
+<li><em>Phase and Amplitude Distortion Methods for Digital Synthesis of Classic Analogue Waveforms</em> (Timoney1 2009)</li>
+<li><p><em>Synthesis of Quasi-Bandlimited Analog Waveforms Using Frequency Modulation</em> (Schoffhauzer 2007?)</p></li>
+</ul>
+</section>
+<section id="final-project" class="level2">
+<h2>Final project</h2>
+<p>Each student is expected to develop a practical application or exploration of one or more of the techniques we present, showing understanding of a particular synthesis or processing technique. The final project consists of open source software and documentation.</p>
+<section id="topics" class="level3">
+<h3>Topics</h3>
+<p>Time permitting, we discuss subset of the following:</p>
+<ul>
+<li>Concepts
+<ul>
+<li>Music: Pitch, Timbre, Intensity, and Duration</li>
+<li>Physical: Frequency, Spectrum, Pressure, Time</li>
+<li>Sine, Impulse, Sawtooth, Square, Triangle</li>
+<li>A/DAC, Sampling, Aliasing, and Band-limited oscillators</li>
+<li>Signal arithmetic: Mixing, Inversion, Modulation,</li>
+<li>Envelopes: AD, ASR, ADSR</li>
+<li>Waveshaping</li>
+<li>Feedback</li>
+</ul></li>
+<li>Synthesis techniques
+<ul>
+<li>Subractive</li>
+<li>Additive</li>
+<li>Analysis/Resynthesis (<a href="http://arss.sourceforge.net/examples.shtml">AARS</a>, <a href="http://www.klingbeil.com/spear/">SPEAR</a>)</li>
+<li>Frequency Modulation (DX-7)</li>
+<li>Amplitude and Phase Modulation</li>
+<li>Hard-Sync and “Ring” Modulation</li>
+<li>Phase distortion (CZ-1)</li>
+<li>One line of C</li>
+<li>Delay-Lines</li>
+<li>Granular</li>
+<li>Physical Modeling (VL-1)</li>
+<li>Spectrally-matched click</li>
+</ul></li>
+<li>Processing techniques
+<ul>
+<li>Filtering
+<ul>
+<li>Lowpass, highpass, bandpass, bandreject</li>
+</ul></li>
+<li>Reverb/Delay</li>
+<li>Pitch shifting / Time stretching
+<ul>
+<li>Phase Vocoder</li>
+<li>Vocoder (Spectral Cross-modular)</li>
+</ul></li>
+<li>Dynamic Range Compression
+<ul>
+<li>Side-chaining</li>
+</ul></li>
+<li>Perceptual Coding (mp3)</li>
+</ul></li>
+<li>Fourier Series
+<ul>
+<li><a href="http://mathworld.wolfram.com/FourierSeriesTriangleWave.html">Triangle</a></li>
+<li><a href="http://mathworld.wolfram.com/FourierSeriesSawtoothWave.html">Sawtooth</a></li>
+<li><a href="http://mathworld.wolfram.com/FourierSeriesSquareWave.html">Square</a></li>
+<li><a href="http://mathworld.wolfram.com/DeltaFunction.html">Impulse</a></li>
+</ul></li>
+<li><a href="http://mathworld.wolfram.com/GibbsPhenomenon.html">Gibbs Phenomenon</a></li>
+<li><a href="http://mathworld.wolfram.com/Discontinuity.html">Discontinuity</a></li>
+</ul>
+</section>
+</section>
+<section id="homework-labs-and-reading" class="level2">
+<h2>Homework, Labs, and Reading</h2>
+<p>Homework, reading reports/quizzes, and lab work count for approximately 50% of course grades. We assign these roughly once per week over the first 5-8 weeks of the quarter.</p>
+</section>
+<section id="final-projects" class="level2">
+<h2>Final Projects</h2>
+<p>Final projects count for approximately 50% of your course grade. Each course requires you to submit a final project in the form of an original, open source software project as well as the proposal, documentation, and public demonstration thereof. With this project, you demonstrate your understanding of the subject.</p>
+<p>Final project grades are spread out over several “milestones” that start early in the quarter.</p>
+<section id="final-project-milestones" class="level3">
+<h3>Final Project Milestones</h3>
+<ul>
 <li>Week 4:
 <ul>
 <li>Present a 45-second in class “<a href="https://en.wikipedia.org/wiki/Elevator_pitch">elevator pitch</a>” promoting your project</li>
@@ -99,6 +185,7 @@
 </ul>
 <p>Drafts of written deliverables must be submitted as <a href="https://docs.google.com">Google Docs</a> so that I may make edits, annotations, and suggestions. Submit final versions of written deliverables as PDFs; These should meet academic standards, and faculty may read them.</p>
 <p>Final submission of project materials must take the form of an email containing a link to a single ZIP file hosted by a cloud service. The email subject must be “MAT X Final Project” where X is the identifier of the course (e.g., 240B, 201B, etc.).</p>
+</section>
 </section>
 </article>
 </body>

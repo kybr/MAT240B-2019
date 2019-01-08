@@ -1,11 +1,15 @@
-## MAT 240B: Digital Audio Programming - Synthesis and Processing
+---
+title: Syllabus
+author: Karl Yerkes
+date: 'January 8, 2019'
+---
 
-> Instructor: Karl Yerkes <karl.yerkes@gmail.com>
->
-> TA: Diarmid Flatley <diarmid@umail.ucsb.edu>
->
+
+<section>
 
 This course surveys established techniques for audio synthesis and digital signal processing applied to sound. We explore and implement additive, subtractive, frequency modulation and granular synthesis techniques and we cover digital audio effects such as reverb, filter, phase vocoder, and dynamic range compression.
+
+</section>
 
 Languages, frameworks, and tools:
 
