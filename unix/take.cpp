@@ -1,10 +1,16 @@
 #include "everything.h"
+using namespace diy;
 
 // accept and pass on only so many inputs
 
 int main(int argc, char* argv[]) {
-  unsigned many = strtoul(argv[1], nullptr, 0);
-  if (many <= 0) return 0;
+  std::vector<std::string> a(argv, argv + argc);
+  if (argc < 2) {
+    printf("take <n> # take n values from the input stream");
+    return 1;
+  }
+
+  unsigned many = stoi(a[1]);
 
   char buffer[256];
   while (many > 0) {

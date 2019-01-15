@@ -4,8 +4,6 @@
   <meta charset="utf-8">
   <meta name="generator" content="pandoc">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <meta name="author" content="Karl Yerkes">
-  <meta name="dcterms.date" content="2019-01-08">
   <title>Assignments</title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
@@ -89,16 +87,81 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <![endif]-->
 </head>
 <body>
+<div>
+<a href="index.html">Home</a> 
+<a href="assignments.html">Assignments</a> 
+<a href="setup.html">Setup</a> 
+<a href="syllabus.html">Syllabus</a> 
+</div>
 <article>
 <header>
 <h1 class="title">Assignments</h1>
-<p class="byline">January 8, 2019 &ndash; Karl Yerkes</p>
 </header>
 <section>
 <p>For each reading assignment, write one page describing your experience<span><label for="sn-1" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-1" class="margin-toggle"/><span class="sidenote">Answer this question: What is most important thing for <em>you</em> to say about this reading? Was the reading useless?<br />
 <br />
 </span></span> with the reading. Submit a reading response by creating a <a href="https://drive.google.com">Google Document</a> and sharing it with me. Title your document with the name of the class, your name, and the assignment number. For instance, Frank Zappa might use <em>MAT201B Frank Zappa Assignment 4</em> as the title of his response to reading assignment 4.</p>
 <p>For each programming assignment, submit your code by pushing it to your <a href="https://github.com">Github</a> repository for this class. Unless the assignment specifies otherwise, submit your programming assignment solution as a single <em>.cpp</em> placed in a folder named <em>assignment</em>.</p>
+</section>
+<section id="assignment-1-due-2019-01-21-by-1700" class="level2">
+<h2>Assignment 1 | Due 2019-01-21 by 1700</h2>
+<p>With Chowning’s 1973 paper in mind, study <em>Synthesis of Quasi-Bandlimited Analog Waveforms Using Frequency Modulation</em> (Schoffhauzer 2005). This FM technique establishes parameters—Consider referring to <a href="https://en.wikipedia.org/wiki/Parametrization_(geometry)">parameterization</a>. With Stilson’s 1996 paper in mind, study <em>Hard Sync Without Aliasing</em> (Brandt 2001); How does this paper compare to Stilson’s? Finally, read chapters 1 and 2 of <em>Numerical Sound Synthesis</em> (Bilbao 2009).</p>
+<p>Write a C++ program that calculates word frequency and produces a list of unique words, sorted by frequency (most frequent words first). Your program should read in plain-text files such as books found on <a href="https://www.gutenberg.org">Project Guttenberg</a>. For instance, <a href="https://www.gutenberg.org/files/50109/50109-0.txt">The Mysterious Stranger</a> (for me) results in this output:</p>
+<pre><code>1649:the
+926:to
+854:of
+802:a
+714:was
+548:in
+548:he
+513:it
+429:that
+425:I
+372:not
+344:for
+324:we
+303:his
+298:is
+294:with
+289:had
+285:but
+277:you
+237:were
+195:as
+192:him
+182:her
+178:be
+177:have
+172:they
+169:He
+169:would
+...</code></pre>
+<p>You will almost certainly need to refer to documentation these: <a href="http://www.cplusplus.com/reference/utility/pair">pair</a>, <a href="http://www.cplusplus.com/reference/unordered_map/unordered_map">unorded_map</a>, and <a href="http://www.cplusplus.com/reference/algorithm/sort">sort</a>. Start with the code below:</p>
+<div class="sourceCode" id="lst:histogram"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:histogram-1" title="1"><span class="pp">#include </span><span class="im">&lt;algorithm&gt;</span><span class="pp">      </span><span class="co">// sort</span></a>
+<a class="sourceLine" id="lst:histogram-2" title="2"><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span><span class="pp">       </span><span class="co">// cin, cout, printf</span></a>
+<a class="sourceLine" id="lst:histogram-3" title="3"><span class="pp">#include </span><span class="im">&lt;unordered_map&gt;</span><span class="pp">  </span><span class="co">// unordered_map</span></a>
+<a class="sourceLine" id="lst:histogram-4" title="4"><span class="pp">#include </span><span class="im">&lt;vector&gt;</span><span class="pp">         </span><span class="co">// vector</span></a>
+<a class="sourceLine" id="lst:histogram-5" title="5"><span class="kw">using</span> <span class="kw">namespace</span> std;</a>
+<a class="sourceLine" id="lst:histogram-6" title="6"><span class="dt">int</span> main() {</a>
+<a class="sourceLine" id="lst:histogram-7" title="7">  unordered_map&lt;string, <span class="dt">unsigned</span>&gt; dictionary;</a>
+<a class="sourceLine" id="lst:histogram-8" title="8"></a>
+<a class="sourceLine" id="lst:histogram-9" title="9">  string word;</a>
+<a class="sourceLine" id="lst:histogram-10" title="10">  <span class="cf">while</span> (cin &gt;&gt; word) {</a>
+<a class="sourceLine" id="lst:histogram-11" title="11"></a>
+<a class="sourceLine" id="lst:histogram-12" title="12">    <span class="co">// put your counting code here</span></a>
+<a class="sourceLine" id="lst:histogram-13" title="13">    <span class="co">//</span></a>
+<a class="sourceLine" id="lst:histogram-14" title="14">    <span class="co">// use dictionary.find, dictionary.end, and dictionary[]</span></a>
+<a class="sourceLine" id="lst:histogram-15" title="15">  }</a>
+<a class="sourceLine" id="lst:histogram-16" title="16"></a>
+<a class="sourceLine" id="lst:histogram-17" title="17">  vector&lt;pair&lt;string, <span class="dt">unsigned</span>&gt;&gt; wordList;</a>
+<a class="sourceLine" id="lst:histogram-18" title="18">  <span class="cf">for</span> (<span class="kw">auto</span>&amp; t : dictionary) wordList.push_back(t);</a>
+<a class="sourceLine" id="lst:histogram-19" title="19"></a>
+<a class="sourceLine" id="lst:histogram-20" title="20">  <span class="co">// put your sorting code here</span></a>
+<a class="sourceLine" id="lst:histogram-21" title="21">  <span class="co">//</span></a>
+<a class="sourceLine" id="lst:histogram-22" title="22">  <span class="co">// use the sort function</span></a>
+<a class="sourceLine" id="lst:histogram-23" title="23"></a>
+<a class="sourceLine" id="lst:histogram-24" title="24">  <span class="cf">for</span> (<span class="kw">auto</span>&amp; t : wordList) printf(<span class="st">&quot;</span><span class="sc">%u</span><span class="st">:</span><span class="sc">%s\n</span><span class="st">&quot;</span>, t.second, t.first.c_str());</a>
+<a class="sourceLine" id="lst:histogram-25" title="25">}</a></code></pre></div>
 </section>
 <section id="assignment-0-due-2019-01-14-by-1700" class="level2">
 <h2>Assignment 0 | Due 2019-01-14 by 1700</h2>

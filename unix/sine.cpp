@@ -1,4 +1,5 @@
 #include "everything.h"
+using namespace diy;
 
 // XXX this is broken; it does not process arguments... yet
 

@@ -18,3 +18,6 @@ Build a program like this:
 
     make
 
+## PATH
+
+export PATH=$PATH:`pwd`

@@ -1,15 +1,18 @@
 #include "everything.h"
-
-// XXX this is broken; it does not process arguments... yet
+using namespace diy;
 
 int main(int argc, char* argv[]) {
-  float frequency = 220, value = 0;
-  if (argc == 2) frequency = atof(argv[1]);
+  float frequency = 220;
+  float phase = 0;
+
+  std::vector<std::string> a(argv, argv + argc);
+  if (argc > 2) phase = fmod(stof(a[2]), 2.0f);
+  if (argc > 1) frequency = stof(a[1]);
 
   float perSampleIncrement = frequency / SAMPLE_RATE;
   while (true) {
-    value += perSampleIncrement;
-    if (value > 1) value -= 1;
-    printf("%f\n", value);  // output format
+    phase += perSampleIncrement;
+    if (phase > 1) phase -= 1;
+    printf("%f\n", phase);
   }
 }

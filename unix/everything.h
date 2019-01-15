@@ -1,10 +1,17 @@
 #ifndef __EVERYTHING__
 #define __EVERYTHING__
 
-// C-language stuff
 #include <cmath>    // sin, cos, log
 #include <cstdio>   // printf
 #include <cstdlib>  // rand
+#include <iostream>
+#include <string>
+#include <vector>
+
+#define DR_WAV_IMPLEMENTATION
+#include "dr_wav.h"
+
+namespace diy {
 
 // constants specific to audio
 //
@@ -22,5 +29,7 @@ float scale(float value, float low, float high, float low_, float high_) {
 float uniform(float low, float high) {
   return low + (high - low) * float(rand()) / RAND_MAX;
 }
+
+}  // namespace diy
 
 #endif
