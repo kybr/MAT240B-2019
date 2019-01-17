@@ -37,7 +37,7 @@ struct Phasor {
     increment = hertz / SAMPLE_RATE;
   }
   float frequency() { return SAMPLE_RATE * increment; }
-  void frequencyAdd(float hertz) { increment += hertz / SAMPLE_RATE; }
+  void modulate(float hertz) { increment += hertz / SAMPLE_RATE; }
 
   float operator()() {
     // increment and wrap phase; this only works correctly for frequencies in
@@ -338,22 +338,15 @@ struct OnePole {
 };
 
 struct Array {
+  std::vector<float> data;
+  /*
   float* data = nullptr;
   unsigned size = 0;
-
   virtual ~Array() {
     printf("Array deleted.\n");
     fflush(stdout);
     if (data) delete[] data;
   }
-
-  // deep-copy copy constructor
-  // Array(const Array& other);
-  // also do assignment
-
-  float& operator[](unsigned index) { return data[index]; }
-  float operator[](const float index) const { return get(index); }
-
   void resize(unsigned n) {
     size = n;
     if (data) delete[] data;  // or your have a memory leak
@@ -365,12 +358,24 @@ struct Array {
     }
   }
 
-  float get01(float index) const { return get(size * index); }
+  */
+
+  // deep-copy copy constructor
+  // Array(const Array& other);
+  // also do assignment
+
+  void resize(unsigned n) { data.resize(n, 0); }
+  float& operator[](unsigned index) { return data[index]; }
+  float operator[](const float index) const { return get(index); }
+
+  float phasor(float index) const { return get(data.size() * index); }
+
   float get(float index) const {
     // allow for sloppy indexing (e.g., negative, huge) by fixing the index to
     // within the bounds of the array
-    if (index < 0) index += size;  // -21221488559881683402437427200.000000
-    if (index > size) index -= size;
+    if (index < 0)
+      index += data.size();  // -21221488559881683402437427200.000000
+    if (index > data.size()) index -= data.size();
 
     // defer to our method without bounds checking
     return raw(index);
@@ -379,14 +384,16 @@ struct Array {
   float raw(const float index) const {
     const unsigned i = floor(index);
     const float x0 = data[i];
-    const float x1 = data[(i == (size - 1)) ? 0 : i + 1];  // looping semantics
+    const float x1 =
+        data[(i == (data.size() - 1)) ? 0 : i + 1];  // looping semantics
     const float t = index - i;
     return x1 * t + x0 * (1 - t);
   }
 
   void add(const float index, const float value) {
     const unsigned i = floor(index);
-    const unsigned j = (i == (size - 1)) ? 0 : i + 1;  // looping semantics
+    const unsigned j =
+        (i == (data.size() - 1)) ? 0 : i + 1;  // looping semantics
     const float t = index - i;
     data[i] += value * (1 - t);
     data[j] += value * t;
@@ -406,11 +413,11 @@ struct Delay : Array {
 
   float operator()(float sample) {
     float index = next - delay;
-    if (index < 0) index += size;
+    if (index < 0) index += data.size();
     float returnValue = get(index);
     data[next] = data[next] * 0.5 + sample;
     next++;
-    if (next >= size) next = 0;
+    if (next >= data.size()) next = 0;
     return returnValue;
   }
 };
@@ -466,17 +473,7 @@ struct AttackDecay {
 
 struct ADSR {
   Line attack, decay, release;
-  int state{4};
-
-  void on() {
-    attack.value = 0;
-    decay.value = 1;
-    state = 0;
-  }
-  void off() {
-    release.value = decay.target;
-    state = 3;
-  }
+  int state = 0;
 
   void set(float a, float d, float s, float r) {
     attack.set(0, 1, a);
@@ -484,25 +481,30 @@ struct ADSR {
     release.set(s, 0, r);
   }
 
-  float operator()() {
-    switch (state) {
-      case 0:
-        if (!attack.done()) return attack();
-        state++;
-      case 1:
-        if (!decay.done()) return decay();
-        state++;
-      case 2:
-        return decay.target;
-      case 3:
-        if (!release.done()) return release();
-        state++;
-      case 4:
-      default:
-        return 0;
-    }
+  void on() {
+    state = 1;
+    attack.value = 0;
+    decay.value = 1;
+    release.value = decay.target;
   }
 
+  void off() { state = 3; }
+
+  float operator()() {
+    switch (state) {
+      default:
+      case 0:
+        return 0;
+      case 1:
+        if (!attack.done()) return attack();
+        if (!decay.done()) return decay();
+        state = 2;
+      case 2:  // sustaining...
+        return decay.target;
+      case 3:
+        return release();
+    }
+  }
   void print() {
     printf("  state:%d\n", state);
     printf("  attack:%f\n", attack.seconds);
@@ -541,7 +543,7 @@ struct Table : Phasor, Array {
   Table(unsigned size = 4096) { resize(size); }
 
   virtual float operator()() {
-    const float index = phase * size;
+    const float index = phase * data.size();
     const float v = get(index);
     Phasor::operator()();
     return v;
@@ -573,6 +575,21 @@ struct Sine : Table {
     for (unsigned i = 0; i < size; ++i) data[i] = sinf(i * pi2 / size);
   }
 };
+
+struct SineArray : Array {
+  SineArray(unsigned size = 10000) {
+    const float pi2 = M_PI * 2;
+    resize(size);
+    for (unsigned i = 0; i < size; ++i) data[i] = sinf(i * pi2 / size);
+  }
+  float operator()(float phase) { return phasor(phase); }
+};
+
+static float sine(float phase) {
+  static SineArray instance;
+  return instance(phase);
+}
+
 //
 // RAII
 struct BlockTimer {

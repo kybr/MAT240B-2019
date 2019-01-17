@@ -13,20 +13,11 @@ struct Operator : Phasor {
   float scaleFactor = 1;
   ADSR envelope;
 
-  Array* sine{nullptr};  // XXX!
-
-  // XXX wtfdoes this do anythign?
-  // Operator() {
-  //   frequencyRatio = 1;
-  //   scaleFactor = 1;
-  //   sine = nullptr;
-  // }
-
   float operator()() {
-    return sine->get01(Phasor::operator()()) * envelope() * scaleFactor;
+    return sine(Phasor::operator()()) * envelope() * scaleFactor;
   }
   float operator()(float modulation) {
-    frequencyAdd(modulation);
+    modulate(modulation);
     return operator()();
   }
 
@@ -46,18 +37,26 @@ struct DX7 {
     Operator op[6];
   };
 
-  Sine sine;
   float _ = 0;  // feedback
-  int algorithm = 1;
 
   DX7() {
     for (auto& o : op) {
-      o.sine = &sine;
       o.frequencyRatio = 1;
       o.scaleFactor = 1;
       o.envelope.set(0, 0, 1, 0);
       o.envelope.state = 4;
     }
+  }
+
+  void randomize() {
+    for (auto& o : op) {
+      o.frequencyRatio = rnd::uniform(8, 1);
+      // e.frequencyRatio = rnd::uniform(2.0, 1.0);
+      o.scaleFactor = rnd::uniform(8.0, 1.0);
+      o.envelope.set(rnd::uniform(0.7, 0.1), rnd::uniform(0.5, 0.1),
+                     rnd::uniform(0.8, 0.2), rnd::uniform(0.8, 0.2));
+    }
+    frequency(mtof(rnd::uniform(15, 70)));
   }
 
   void frequency(float hertz) {
@@ -75,7 +74,7 @@ struct DX7 {
     for (auto& o : op) o.envelope.off();
   }
 
-  float operator()() {
+  float operator()(int algorithm = 32) {
     switch (algorithm) {
       default:
       case 1:
@@ -90,6 +89,8 @@ struct DX7 {
         return (a(b()) + c(d()) + e(_ = f(_))) / 3;
       case 6:
         return (a(b()) + c(d()) + (_ = e(f(_)))) / 3;
+      case 14:
+        return (a(b()) + c(d(e() + (_ = f(_))))) / 2;
       case 32:
         return (a() + b() + c() + d() + e() + (_ = f(_))) / 6;
     }
@@ -100,7 +101,7 @@ struct DX7 {
     printf("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");
     printf("XX  DX7 Settings  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");
     printf("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");
-    printf("algorithm:%d\n", algorithm);
+    // printf("algorithm:%d\n", algorithm);
     for (auto& o : op) {
       printf("  ----------\n");
       o.print();
@@ -108,17 +109,6 @@ struct DX7 {
     fflush(stdout);
   }
 };
-
-void randomize(DX7& dx7) {
-  for (auto& o : dx7.op) {
-    o.frequencyRatio = rnd::uniform(8, 1);
-    // e.frequencyRatio = rnd::uniform(2.0, 1.0);
-    o.scaleFactor = rnd::uniform(8.0, 1.0);
-    o.envelope.set(rnd::uniform(0.7, 0.1), rnd::uniform(0.5, 0.1),
-                   rnd::uniform(0.8, 0.2), rnd::uniform(0.8, 0.2));
-  }
-  dx7.frequency(mtof(rnd::uniform(15, 70)));
-}
 
 struct MyApp : App {
   ControlGUI gui;
@@ -128,24 +118,18 @@ struct MyApp : App {
   DX7 dx7;
 
   void onCreate() override {
+    rnd::global().seed(21);
     gui.init();
     gui.add(algorithm);
     gui.add(frequency);
 
-    // randomize(dx7);
+    dx7.randomize();
     dx7.print();
-
-    //    float f = 0;
-    //    printf("%f\n", f = frequency);
-    //    fflush(stdout);
-    //    dx7.frequency(mtof(frequency));
-    rnd::global().seed(21);
   }
 
   void onAnimate(double dt) override {
     //
     navControl().active(!gui.usingInput());
-    dx7.algorithm = algorithm;
   }
 
   void onDraw(Graphics& g) override {
@@ -155,7 +139,7 @@ struct MyApp : App {
 
   void onSound(AudioIOData& io) override {
     while (io()) {
-      float f = dx7() / 3;
+      float f = dx7(algorithm) / 3;
       io.out(0) = f;
       io.out(1) = f;
     }
@@ -163,7 +147,7 @@ struct MyApp : App {
 
   void onKeyDown(Keyboard const& k) override {
     if (k.key() == ' ') dx7.on();
-    if (k.key() == 'r') randomize(dx7);
+    if (k.key() == 'r') dx7.randomize();
   }
 
   void onKeyUp(Keyboard const& k) override {
