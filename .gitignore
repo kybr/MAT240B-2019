@@ -2,6 +2,7 @@
 **/build/
 **/student/
 
+*.pkf
 
 # Prerequisites
 *.d
