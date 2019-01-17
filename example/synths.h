@@ -36,6 +36,8 @@ struct Phasor {
     }
     increment = hertz / SAMPLE_RATE;
   }
+  float frequency() { return SAMPLE_RATE * increment; }
+  float frequencyAdd(float hertz) { increment += hertz / SAMPLE_RATE; }
 
   float operator()() {
     // increment and wrap phase; this only works correctly for frequencies in
@@ -458,6 +460,48 @@ struct AttackDecay {
   float operator()() {
     if (!attack.done()) return attack();
     return decay();
+  }
+};
+
+struct ADSR {
+  Line attack, decay, release;
+  float sustainLevel{0};
+  int state{4};
+
+  void on() {
+    attack.value = 0;
+    decay.value = 1;
+    state = 0;
+  }
+  void off() {
+    release.value = sustainLevel;
+    state = 3;
+  }
+
+  void set(float a, float d, float s, float r) {
+    sustainLevel = s;
+    attack.set(0, 1, a);
+    decay.set(1, s, d);
+    release.set(s, 0, r);
+  }
+
+  float operator()() {
+    switch (state) {
+      case 0:
+        if (!attack.done()) return attack();
+        state++;
+      case 1:
+        if (!decay.done()) return decay();
+        state++;
+      case 2:
+        return sustainLevel;
+      case 3:
+        if (!release.done()) return release();
+        state++;
+      case 4:
+      default:
+        return 0;
+    }
   }
 };
 
