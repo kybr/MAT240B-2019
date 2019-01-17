@@ -6,109 +6,168 @@ using namespace al;
 #include "synths.h"
 using namespace diy;
 
-struct DX7FM {
-  void frequency(float hertz) {
-    for (auto& e : o) e.frequency(e.frequency() * e.frequencyRatio);
+using namespace std;
+
+struct Operator : Phasor {
+  float frequencyRatio = 1;
+  float scaleFactor = 1;
+  ADSR envelope;
+
+  Array* sine{nullptr};  // XXX!
+
+  // XXX wtfdoes this do anythign?
+  // Operator() {
+  //   frequencyRatio = 1;
+  //   scaleFactor = 1;
+  //   sine = nullptr;
+  // }
+
+  float operator()() {
+    return sine->get01(Phasor::operator()()) * envelope() * scaleFactor;
   }
-  void on() {
-    for (auto& e : o) e.envelope.on();
-    for (auto& e : o) e.phase = 0;
-  }
-  void off() {
-    for (auto& e : o) e.envelope.off();
+  float operator()(float modulation) {
+    frequencyAdd(modulation);
+    return operator()();
   }
 
-  struct Operator : Sine {
-    float frequencyRatio{1};
-    float scaleFactor{1};
-    bool feedback{false};
-    ADSR envelope;
-    float operator()() {
-      float v = Sine::operator()() * envelope() * scaleFactor;
-      if (feedback) frequencyAdd(v);
-      return v;
-    }
-    float operator()(float modulation) {
-      frequencyAdd(modulation);
-      return operator()();
-    }
+  void print() {
+    printf("  frequency:%f\n", frequency());
+    printf("  ratio:%f\n", frequencyRatio);
+    printf("  scale:%f\n", scaleFactor);
+    envelope.print();
+  }
+};
+
+struct DX7 {
+  union {
+    struct {
+      Operator a, b, c, d, e, f;
+    };
+    Operator op[6];
   };
-  Operator o[6];
+
+  Sine sine;
+  float _ = 0;  // feedback
+  int algorithm = 1;
+
+  DX7() {
+    for (auto& o : op) {
+      o.sine = &sine;
+      o.frequencyRatio = 1;
+      o.scaleFactor = 1;
+      o.envelope.set(0, 0, 1, 0);
+      o.envelope.state = 4;
+    }
+  }
+
+  void frequency(float hertz) {
+    for (auto& o : op) o.frequency(hertz * o.frequencyRatio);
+  }
+
+  void on() {
+    for (auto& o : op) {
+      o.envelope.on();
+      o.phase = 0;
+    }
+  }
+
+  void off() {
+    for (auto& o : op) o.envelope.off();
+  }
+
+  float operator()() {
+    switch (algorithm) {
+      default:
+      case 1:
+        return (a(b()) + c(d(e(_ = f(_))))) / 2;
+      case 2:
+        return (a(_ = b(_)) + c(d(e(f())))) / 2;
+      case 3:
+        return (a(b(c())) + d(e(_ = f(_)))) / 2;
+      case 4:
+        return (a(b(c())) + (_ = c(d(f(_))))) / 2;
+      case 5:
+        return (a(b()) + c(d()) + e(_ = f(_))) / 3;
+      case 6:
+        return (a(b()) + c(d()) + (_ = e(f(_)))) / 3;
+      case 32:
+        return (a() + b() + c() + d() + e() + (_ = f(_))) / 6;
+    }
+  }
+
+  void print() {
+    printf("\033[2J\033[;H");
+    printf("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");
+    printf("XX  DX7 Settings  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");
+    printf("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");
+    printf("algorithm:%d\n", algorithm);
+    for (auto& o : op) {
+      printf("  ----------\n");
+      o.print();
+    }
+    fflush(stdout);
+  }
 };
 
-struct DX7FM1 : DX7FM {
-  DX7FM1() { o[5].feedback = true; }
-  float operator()() { return o[2](o[1](o[0]())) + o[5](o[4](o[3]())); }
-};
-
-void randomize(DX7FM& synth) {
-  for (auto& e : synth.o) {
-    e.frequencyRatio = rnd::uniform(4.0, 1.0);
-    e.scaleFactor = rnd::uniform(10.0, 1.0);
-    e.envelope.set(rnd::uniform(0.7, 0.1), rnd::uniform(0.5, 0.1),
+void randomize(DX7& dx7) {
+  for (auto& o : dx7.op) {
+    o.frequencyRatio = rnd::uniform(8, 1);
+    // e.frequencyRatio = rnd::uniform(2.0, 1.0);
+    o.scaleFactor = rnd::uniform(8.0, 1.0);
+    o.envelope.set(rnd::uniform(0.7, 0.1), rnd::uniform(0.5, 0.1),
                    rnd::uniform(0.8, 0.2), rnd::uniform(0.8, 0.2));
   }
-  synth.o[0].frequencyRatio = 1;
-  synth.o[3].frequencyRatio = 1;
+  dx7.frequency(mtof(rnd::uniform(15, 70)));
 }
 
 struct MyApp : App {
   ControlGUI gui;
-  Parameter mod{"/modulation", "", 0.0, "", 0.0, 1.0};
-  Parameter res{"/frequency", "", 0.0, "", 0.0, 127.0};
+  Parameter frequency{"/frequency", "", 40, "", 0, 127};
+  ParameterInt algorithm{"/algorithm", "", 32, "", 1, 32};
 
-  Mesh mesh{Mesh::LINE_STRIP};
-  DX7FM1 fm;
+  DX7 dx7;
 
   void onCreate() override {
     gui.init();
-    gui.add(mod).add(res);
+    gui.add(algorithm);
+    gui.add(frequency);
 
+    // randomize(dx7);
+    dx7.print();
+
+    //    float f = 0;
+    //    printf("%f\n", f = frequency);
+    //    fflush(stdout);
+    //    dx7.frequency(mtof(frequency));
     rnd::global().seed(21);
-    fm.frequency(220);
-    randomize(fm);
-
-    mesh.vertex(0, 0);
-    mesh.vertex(width(), height());
   }
 
   void onAnimate(double dt) override {
     //
     navControl().active(!gui.usingInput());
+    dx7.algorithm = algorithm;
   }
 
   void onDraw(Graphics& g) override {
     g.clear(0.25);
-    g.camera(Viewpoint::ORTHO_FOR_2D);
-    g.draw(mesh);
     gui.draw(g);
   }
 
   void onSound(AudioIOData& io) override {
     while (io()) {
-      float f = fm() / 10;
+      float f = dx7() / 3;
       io.out(0) = f;
       io.out(1) = f;
     }
   }
 
-  bool keyPressed{false};
-  int key{0};
   void onKeyDown(Keyboard const& k) override {
-    keyPressed = true;
-    key = k.key();
-    if (key == ' ') fm.on();
-    if (key == 'r') randomize(fm);
-  }
-  void onKeyUp(Keyboard const& k) override {
-    keyPressed = false;
-    if (key == ' ') fm.off();
+    if (k.key() == ' ') dx7.on();
+    if (k.key() == 'r') randomize(dx7);
   }
 
-  float mouseX, mouseY;
-  void onMouseMove(Mouse const& m) override {
-    mouseX = m.x();
-    mouseY = height() - m.y();
+  void onKeyUp(Keyboard const& k) override {
+    if (k.key() == ' ') dx7.off();
   }
 };
 

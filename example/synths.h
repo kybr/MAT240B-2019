@@ -37,7 +37,7 @@ struct Phasor {
     increment = hertz / SAMPLE_RATE;
   }
   float frequency() { return SAMPLE_RATE * increment; }
-  float frequencyAdd(float hertz) { increment += hertz / SAMPLE_RATE; }
+  void frequencyAdd(float hertz) { increment += hertz / SAMPLE_RATE; }
 
   float operator()() {
     // increment and wrap phase; this only works correctly for frequencies in
@@ -365,6 +365,7 @@ struct Array {
     }
   }
 
+  float get01(float index) const { return get(size * index); }
   float get(float index) const {
     // allow for sloppy indexing (e.g., negative, huge) by fixing the index to
     // within the bounds of the array
@@ -465,7 +466,6 @@ struct AttackDecay {
 
 struct ADSR {
   Line attack, decay, release;
-  float sustainLevel{0};
   int state{4};
 
   void on() {
@@ -474,12 +474,11 @@ struct ADSR {
     state = 0;
   }
   void off() {
-    release.value = sustainLevel;
+    release.value = decay.target;
     state = 3;
   }
 
   void set(float a, float d, float s, float r) {
-    sustainLevel = s;
     attack.set(0, 1, a);
     decay.set(1, s, d);
     release.set(s, 0, r);
@@ -494,7 +493,7 @@ struct ADSR {
         if (!decay.done()) return decay();
         state++;
       case 2:
-        return sustainLevel;
+        return decay.target;
       case 3:
         if (!release.done()) return release();
         state++;
@@ -502,6 +501,14 @@ struct ADSR {
       default:
         return 0;
     }
+  }
+
+  void print() {
+    printf("  state:%d\n", state);
+    printf("  attack:%f\n", attack.seconds);
+    printf("  decay:%f\n", decay.seconds);
+    printf("  sustain:%f\n", decay.target);
+    printf("  release:%f\n", release.seconds);
   }
 };
 
