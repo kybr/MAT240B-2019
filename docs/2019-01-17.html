@@ -109,13 +109,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>How might we implement DX7-style FM using our building blocks from <code>synths.h</code>? We need:</p>
 <ul>
 <li>An <code>Operator</code> thingy that models DX7 operators, including <a href="https://en.wikipedia.org/wiki/Feedback">feedback</a></li>
-<li>A proper <a href="https://en.wikipedia.org/wiki/Envelope_(music)">ADSR</a> [envelop] to drive <code>Operator</code></li>
+<li>A proper <a href="https://en.wikipedia.org/wiki/Envelope_(music)">ADSR</a> <a href="https://en.wikipedia.org/wiki/Envelope_(waves)">envelope</a> to drive <code>Operator</code></li>
 <li>A way to compose <code>Operator</code> topologies as seen in fig. 1</li>
 <li>Some way to set patch settings</li>
 </ul>
+<p>Listing: A model of DX7 operators</p>
 <div class="sourceCode" id="lst:operator"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:operator-1" title="1"><span class="kw">struct</span> Operator {</a>
 <a class="sourceLine" id="lst:operator-2" title="2">  <span class="co">// ???</span></a>
 <a class="sourceLine" id="lst:operator-3" title="3">};</a></code></pre></div>
+<p>…</p>
+<p>Listing: A way to compose DX7 algorithms</p>
 <div class="sourceCode" id="lst:composition"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:composition-1" title="1">  <span class="cf">return</span> a(b(c())) + d(e(_ = f(_))); <span class="co">// algorithm 3</span></a>
 <a class="sourceLine" id="lst:composition-2" title="2">  <span class="cf">return</span> a() + b() + c() + d() + e() + (_ = f(_)); <span class="co">// 32</span></a></code></pre></div>
 </section>
