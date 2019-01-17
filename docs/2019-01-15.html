@@ -115,16 +115,49 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li>Mixing waveforms by alternation rather than addition</li>
 </ol>
 <p>Listing: Phase distortion synthesis</p>
-<div class="sourceCode" id="lst:pd"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:pd-1" title="1"><span class="kw">struct</span> PD {</a>
-<a class="sourceLine" id="lst:pd-2" title="2">  <span class="co">// ???</span></a>
-<a class="sourceLine" id="lst:pd-3" title="3">};</a></code></pre></div>
+<div class="sourceCode" id="lst:pd"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:pd-1" title="1"><span class="kw">struct</span> PhaseDistortion : Phasor, Array {</a>
+<a class="sourceLine" id="lst:pd-2" title="2">  PhaseDistortion(<span class="dt">unsigned</span> size = <span class="dv">10000</span>) {</a>
+<a class="sourceLine" id="lst:pd-3" title="3">    <span class="at">const</span> <span class="dt">float</span> pi2 = M_PI * <span class="dv">2</span>;</a>
+<a class="sourceLine" id="lst:pd-4" title="4">    resize(size);</a>
+<a class="sourceLine" id="lst:pd-5" title="5">    <span class="cf">for</span> (<span class="dt">unsigned</span> i = <span class="dv">0</span>; i &lt; size; ++i) data[i] = sinf(i * pi2 / size);</a>
+<a class="sourceLine" id="lst:pd-6" title="6">  }</a>
+<a class="sourceLine" id="lst:pd-7" title="7"></a>
+<a class="sourceLine" id="lst:pd-8" title="8">  Tri tri;</a>
+<a class="sourceLine" id="lst:pd-9" title="9">  <span class="dt">float</span> modulationFactor = <span class="dv">0</span>;</a>
+<a class="sourceLine" id="lst:pd-10" title="10"></a>
+<a class="sourceLine" id="lst:pd-11" title="11">  <span class="kw">virtual</span> <span class="dt">float</span> <span class="kw">operator</span>()() {</a>
+<a class="sourceLine" id="lst:pd-12" title="12">    <span class="at">const</span> <span class="dt">float</span> index = (phase + tri() * modulationFactor) * size;</a>
+<a class="sourceLine" id="lst:pd-13" title="13">    <span class="at">const</span> <span class="dt">float</span> v =</a>
+<a class="sourceLine" id="lst:pd-14" title="14">        get(index);  <span class="co">// XXX raw crashes and i think it should not: investigate</span></a>
+<a class="sourceLine" id="lst:pd-15" title="15">    Phasor::<span class="kw">operator</span>()();</a>
+<a class="sourceLine" id="lst:pd-16" title="16">    <span class="cf">return</span> v;</a>
+<a class="sourceLine" id="lst:pd-17" title="17">  }</a>
+<a class="sourceLine" id="lst:pd-18" title="18"></a>
+<a class="sourceLine" id="lst:pd-19" title="19">  <span class="kw">virtual</span> <span class="dt">void</span> frequency(<span class="dt">float</span> hertz) {</a>
+<a class="sourceLine" id="lst:pd-20" title="20">    Phasor::frequency(hertz);</a>
+<a class="sourceLine" id="lst:pd-21" title="21">    tri.frequency(hertz);</a>
+<a class="sourceLine" id="lst:pd-22" title="22">  }</a>
+<a class="sourceLine" id="lst:pd-23" title="23">};</a></code></pre></div>
 <p>Listing: Windowed “sync” technique to simulate a resonant filter sweep</p>
-<div class="sourceCode" id="lst:sync"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:sync-1" title="1"><span class="kw">struct</span> WindowSync {</a>
-<a class="sourceLine" id="lst:sync-2" title="2">  <span class="co">// ???</span></a>
-<a class="sourceLine" id="lst:sync-3" title="3">};</a></code></pre></div>
+<div class="sourceCode" id="lst:sync"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:sync-1" title="1"><span class="kw">struct</span> WindowedSync : Edge, Array {</a>
+<a class="sourceLine" id="lst:sync-2" title="2">  WindowedSync(<span class="dt">unsigned</span> size = <span class="dv">10000</span>) {</a>
+<a class="sourceLine" id="lst:sync-3" title="3">    <span class="at">const</span> <span class="dt">float</span> pi2 = M_PI * <span class="dv">2</span>;</a>
+<a class="sourceLine" id="lst:sync-4" title="4">    resize(size);</a>
+<a class="sourceLine" id="lst:sync-5" title="5">    <span class="cf">for</span> (<span class="dt">unsigned</span> i = <span class="dv">0</span>; i &lt; size; ++i) data[i] = sinf(i * pi2 / size);</a>
+<a class="sourceLine" id="lst:sync-6" title="6">  }</a>
+<a class="sourceLine" id="lst:sync-7" title="7"></a>
+<a class="sourceLine" id="lst:sync-8" title="8">  Phasor resonator;</a>
+<a class="sourceLine" id="lst:sync-9" title="9"></a>
+<a class="sourceLine" id="lst:sync-10" title="10">  <span class="kw">virtual</span> <span class="dt">float</span> <span class="kw">operator</span>()() {</a>
+<a class="sourceLine" id="lst:sync-11" title="11">    <span class="at">const</span> <span class="dt">float</span> index = resonator() * size;</a>
+<a class="sourceLine" id="lst:sync-12" title="12">    <span class="at">const</span> <span class="dt">float</span> v = get(index) * (<span class="dv">1</span> - phase);</a>
+<a class="sourceLine" id="lst:sync-13" title="13">    <span class="cf">if</span> (Edge::<span class="kw">operator</span>()()) resonator.phase = <span class="dv">0</span>;</a>
+<a class="sourceLine" id="lst:sync-14" title="14">    <span class="cf">return</span> v;</a>
+<a class="sourceLine" id="lst:sync-15" title="15">  }</a>
+<a class="sourceLine" id="lst:sync-16" title="16">};</a></code></pre></div>
 <p>Listing: Alternate between waveforms per-cycle</p>
-<div class="sourceCode" id="lst:alt"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:alt-1" title="1"><span class="kw">struct</span> Alt {</a>
-<a class="sourceLine" id="lst:alt-2" title="2">  <span class="co">// ???</span></a>
+<div class="sourceCode" id="lst:alt"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:alt-1" title="1"><span class="kw">struct</span> AlternateWaveform {</a>
+<a class="sourceLine" id="lst:alt-2" title="2">  <span class="co">// Left as an exercise for the student</span></a>
 <a class="sourceLine" id="lst:alt-3" title="3">};</a></code></pre></div>
 </section>
 </article>
