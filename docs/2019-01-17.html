@@ -4,71 +4,8 @@
   <meta charset="utf-8">
   <meta name="generator" content="pandoc">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>2019-01-17</title>
+  <title>2019-01-17 | Frequency Modulation</title>
   <style type="text/css">code{white-space: pre;}</style>
-  <style type="text/css">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
-}
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(title);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-    color: #aaaaaa;
-  }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-div.sourceCode
-  {  }
-@media screen {
-a.sourceLine::before { text-decoration: underline; }
-}
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #7d9029; } /* Attribute */
-code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4070a0; } /* Char */
-code span.cn { color: #880000; } /* Constant */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.dt { color: #902000; } /* DataType */
-code span.dv { color: #40a070; } /* DecVal */
-code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #40a070; } /* Float */
-code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code span.op { color: #666666; } /* Operator */
-code span.ot { color: #007020; } /* Other */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.st { color: #4070a0; } /* String */
-code span.va { color: #19177c; } /* Variable */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-  </style>
   <link rel="stylesheet" href="latex.css">
   <link rel="stylesheet" href="pandoc-solarized.css">
   <link rel="stylesheet" href="pandoc.css">
@@ -95,69 +32,15 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 <article>
 <header>
-<h1 class="title">2019-01-17</h1>
+<h1 class="title">2019-01-17 | Frequency Modulation</h1>
 </header>
-<section>
-<p>Frequency Modulation</p>
-</section>
 <section id="yamaha-dx7" class="level2">
 <h2><a href="https://en.wikipedia.org/wiki/Yamaha_DX7">Yamaha DX7</a></h2>
 <ul>
 <li>Uses <a href="https://en.wikipedia.org/wiki/Frequency_modulation">FM</a> (frequency modulation)—<a href="https://en.wikipedia.org/wiki/Frequency_modulation_synthesis">FM synthesis</a>, specifically</li>
 <li><a href="https://usa.yamaha.com/files/download/other_assets/9/333979/DX7E1.pdf">Yamaha DX7 owner’s manual</a></li>
-<li></li>
 </ul>
-<p>How might we implement PD using our building blocks from <code>synths.h</code>? We have three techniques to implement:</p>
-<ol type="1">
-<li>“Distorting” phase lookup on a sine wavetable</li>
-<li>Simulating a resonant filter sweep using a windowed sync</li>
-<li>Mixing waveforms by alternation rather than addition</li>
-</ol>
-<p>Listing: Phase distortion synthesis</p>
-<div class="sourceCode" id="lst:pd"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:pd-1" title="1"><span class="kw">struct</span> PhaseDistortion : Phasor, Array {</a>
-<a class="sourceLine" id="lst:pd-2" title="2">  PhaseDistortion(<span class="dt">unsigned</span> size = <span class="dv">10000</span>) {</a>
-<a class="sourceLine" id="lst:pd-3" title="3">    <span class="at">const</span> <span class="dt">float</span> pi2 = M_PI * <span class="dv">2</span>;</a>
-<a class="sourceLine" id="lst:pd-4" title="4">    resize(size);</a>
-<a class="sourceLine" id="lst:pd-5" title="5">    <span class="cf">for</span> (<span class="dt">unsigned</span> i = <span class="dv">0</span>; i &lt; size; ++i) data[i] = sinf(i * pi2 / size);</a>
-<a class="sourceLine" id="lst:pd-6" title="6">  }</a>
-<a class="sourceLine" id="lst:pd-7" title="7"></a>
-<a class="sourceLine" id="lst:pd-8" title="8">  Tri tri;</a>
-<a class="sourceLine" id="lst:pd-9" title="9">  <span class="dt">float</span> modulationFactor = <span class="dv">0</span>;</a>
-<a class="sourceLine" id="lst:pd-10" title="10"></a>
-<a class="sourceLine" id="lst:pd-11" title="11">  <span class="kw">virtual</span> <span class="dt">float</span> <span class="kw">operator</span>()() {</a>
-<a class="sourceLine" id="lst:pd-12" title="12">    <span class="at">const</span> <span class="dt">float</span> index = (phase + tri() * modulationFactor) * size;</a>
-<a class="sourceLine" id="lst:pd-13" title="13">    <span class="at">const</span> <span class="dt">float</span> v =</a>
-<a class="sourceLine" id="lst:pd-14" title="14">        get(index);  <span class="co">// XXX raw crashes and i think it should not: investigate</span></a>
-<a class="sourceLine" id="lst:pd-15" title="15">    Phasor::<span class="kw">operator</span>()();</a>
-<a class="sourceLine" id="lst:pd-16" title="16">    <span class="cf">return</span> v;</a>
-<a class="sourceLine" id="lst:pd-17" title="17">  }</a>
-<a class="sourceLine" id="lst:pd-18" title="18"></a>
-<a class="sourceLine" id="lst:pd-19" title="19">  <span class="kw">virtual</span> <span class="dt">void</span> frequency(<span class="dt">float</span> hertz) {</a>
-<a class="sourceLine" id="lst:pd-20" title="20">    Phasor::frequency(hertz);</a>
-<a class="sourceLine" id="lst:pd-21" title="21">    tri.frequency(hertz);</a>
-<a class="sourceLine" id="lst:pd-22" title="22">  }</a>
-<a class="sourceLine" id="lst:pd-23" title="23">};</a></code></pre></div>
-<p>Listing: Windowed “sync” technique to simulate a resonant filter sweep</p>
-<div class="sourceCode" id="lst:sync"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:sync-1" title="1"><span class="kw">struct</span> WindowedSync : Edge, Array {</a>
-<a class="sourceLine" id="lst:sync-2" title="2">  WindowedSync(<span class="dt">unsigned</span> size = <span class="dv">10000</span>) {</a>
-<a class="sourceLine" id="lst:sync-3" title="3">    <span class="at">const</span> <span class="dt">float</span> pi2 = M_PI * <span class="dv">2</span>;</a>
-<a class="sourceLine" id="lst:sync-4" title="4">    resize(size);</a>
-<a class="sourceLine" id="lst:sync-5" title="5">    <span class="cf">for</span> (<span class="dt">unsigned</span> i = <span class="dv">0</span>; i &lt; size; ++i) data[i] = sinf(i * pi2 / size);</a>
-<a class="sourceLine" id="lst:sync-6" title="6">  }</a>
-<a class="sourceLine" id="lst:sync-7" title="7"></a>
-<a class="sourceLine" id="lst:sync-8" title="8">  Phasor resonator;</a>
-<a class="sourceLine" id="lst:sync-9" title="9"></a>
-<a class="sourceLine" id="lst:sync-10" title="10">  <span class="kw">virtual</span> <span class="dt">float</span> <span class="kw">operator</span>()() {</a>
-<a class="sourceLine" id="lst:sync-11" title="11">    <span class="at">const</span> <span class="dt">float</span> index = resonator() * size;</a>
-<a class="sourceLine" id="lst:sync-12" title="12">    <span class="at">const</span> <span class="dt">float</span> v = get(index) * (<span class="dv">1</span> - phase);</a>
-<a class="sourceLine" id="lst:sync-13" title="13">    <span class="cf">if</span> (Edge::<span class="kw">operator</span>()()) resonator.phase = <span class="dv">0</span>;</a>
-<a class="sourceLine" id="lst:sync-14" title="14">    <span class="cf">return</span> v;</a>
-<a class="sourceLine" id="lst:sync-15" title="15">  }</a>
-<a class="sourceLine" id="lst:sync-16" title="16">};</a></code></pre></div>
-<p>Listing: Alternate between waveforms per-cycle</p>
-<div class="sourceCode" id="lst:alt"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:alt-1" title="1"><span class="kw">struct</span> AlternateWaveform {</a>
-<a class="sourceLine" id="lst:alt-2" title="2">  <span class="co">// Left as an exercise for the student</span></a>
-<a class="sourceLine" id="lst:alt-3" title="3">};</a></code></pre></div>
+<p>How might we implement DX7-style FM using our building blocks from <code>synths.h</code>?</p>
 </section>
 <section id="last-time" class="level2">
 <h2>Last time…</h2>
