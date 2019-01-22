@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>2019-01-22 | Band-Limited</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="latex.css">
+  <link rel="stylesheet" href="pandoc-solarized.css">
+  <link rel="stylesheet" href="pandoc.css">
+  <link rel="stylesheet" href="tufte-extra.css">
+  <link rel="stylesheet" href="tufte.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+    var mathElements = document.getElementsByClassName("math");
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") { katex.render(texText.data, mathElements[i], { displayMode: mathElements[i].classList.contains("display"), throwOnError: false } );
+    }}});</script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/katex.min.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<div>
+<a href="index.html">Home</a> 
+<a href="assignments.html">Assignments</a> 
+<a href="setup.html">Setup</a> 
+<a href="syllabus.html">Syllabus</a> 
+</div>
+<article>
+<header>
+<h1 class="title">2019-01-22 | Band-Limited</h1>
+</header>
+<ul>
+<li><p><a href="assignments.html">Assignment 2 is online</a></p></li>
+<li>DX7
+<ul>
+<li>updated code</li>
+<li>envelope bug</li>
+<li>mystery bug (crash)</li>
+<li><a href="https://github.com/kybr/MAT240B-2019/blob/d2d866dd487c67ff16ebf343ff96d302c0cad699/example/frequency-modulation.cpp#L92">Confirm algorithm correctness</a> - each of you, please check my code.
+<ul>
+<li>Marc: 1 4 7 10 13 16 19 22 25 28 31</li>
+<li>Raphael: 3 6 9 12 15 18 21 24 27 30</li>
+<li>Kramer: 2 5 8 11 14 17 20 23 26 29 32</li>
+</ul></li>
+</ul></li>
+<li>What is the spectrum of a sin oscillator with feedback modulation?</li>
+<li>Types of interpolation: linear, cubic (polynomial), and sinc (<span class="math inline">sin(x)/x</span>)
+<ul>
+<li><a href="http://paulbourke.net/miscellaneous/interpolation/">Interpolation methods</a></li>
+</ul></li>
+<li>Sinc Interpolation: Construct a Band-Limited Impulse
+<ul>
+<li><a href="https://www.dsprelated.com/freebooks/pasp/Windowed_Sinc_Interpolation.html">Windowed Sinc Interpolation (DSPrelated)</a></li>
+<li><a href="https://ccrma.stanford.edu/~jos/pasp/Windowed_Sinc_Interpolation.html">Windowed Sinc Interpolation (CCRMA)</a></li>
+<li><a href="https://demonstrations.wolfram.com/SincInterpolationForSignalReconstruction/">Sinc Interpolation for Signal Reconstruction</a></li>
+</ul></li>
+<li>analysis of QuasiBandlimitedFM</li>
+<li><p>BLIT, minBLEPS, polyBLEP</p></li>
+<li><p><a href="2019-01-17.html">2019-01-17</a></p></li>
+</ul>
+</article>
+</body>
+</html>
