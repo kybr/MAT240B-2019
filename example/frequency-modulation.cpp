@@ -94,8 +94,7 @@ struct DX7 {
       default:
       case 1:
         _ = f(_);
-        float v = a(b()) + c(d(e(_))));
-        return v / (a.s + c.s);
+        return (a(b()) + c(d(e(_)))) / (a.s + c.s);
       case 2:
         return (a(_ = b(_)) + c(d(e(f())))) / (a.s + c.s);
       case 3:
