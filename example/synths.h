@@ -485,13 +485,15 @@ struct ADSR {
   }
 
   void on() {
-    state = 1;
     attack.value = 0;
     decay.value = 1;
-    release.value = decay.target;
+    state = 1;
   }
 
-  void off() { state = 3; }
+  void off() {
+    release.value = decay.target;
+    state = 3;
+  }
 
   float operator()() {
     switch (state) {

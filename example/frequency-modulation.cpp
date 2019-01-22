@@ -11,13 +11,20 @@ using namespace diy;
 using namespace std;
 
 struct Operator : Phasor {
-  float r = 1;
-  float s = 1;
-  ADSR eg;
+  float r = 1;  // frequency ratio
+  float s = 1;  // scale factor
+  ADSR eg;      // envelope generator
 
-  float operator()() { return sine(Phasor::operator()()) * eg() * s; }
+  // without modulation
+  float operator()() {
+    // sine() is now a function that does a table lookup
+    // look in synths.h for more information.
+    return sine(Phasor::operator()()) * eg() * s;
+  }
+
+  // with modulation
   float operator()(float modulation) {
-    modulate(modulation);
+    modulate(modulation);  // adds frequency to a Phasor
     return operator()();
   }
 
@@ -47,7 +54,7 @@ struct DX7 {
       o.r = 1;
       o.s = 1;
       o.eg.set(0, 0, 1, 0);
-      o.eg.state = 4;
+      o.eg.state = 0;
     }
   }
 
@@ -60,140 +67,6 @@ struct DX7 {
       o.s = mtof(rnd::uniform(scale));
       o.eg.set(rnd::uniform(0.8, 0.05), rnd::uniform(0.3, 0.1),
                rnd::uniform(0.9, 0.4), rnd::uniform(1.1, 0.2));
-
-      /*
-            float sum;
-            switch (algorithm) {
-                // a_____
-              case 16:
-              case 17:
-              case 18:
-                a.s = 1;
-                break;
-
-              // a_c___
-              case 1:
-              case 2:
-              case 7:
-              case 8:
-              case 9:
-              case 12:
-              case 13:
-              case 14:
-              case 15:
-                sum = a.s + c.s;
-                a.s /= sum;
-                c.s /= sum;
-                break;
-
-              // a__d__
-              case 3:
-              case 4:
-              case 10:
-              case 11:
-                sum = a.s + d.s;
-                a.s /= sum;
-                d.s /= sum;
-                break;
-
-              // ab_d__
-              case 20:
-              case 26:
-              case 27:
-                sum = a.s + b.s + d.s;
-                a.s /= sum;
-                b.s /= sum;
-                d.s /= sum;
-                break;
-
-              // a_c_e_
-              case 5:
-              case 6:
-                sum = a.s + c.s + e.s;
-                a.s /= sum;
-                c.s /= sum;
-                e.s /= sum;
-                break;
-
-              // a_c__f
-              case 28:
-                sum = a.s + c.s + f.s;
-                a.s /= sum;
-                c.s /= sum;
-                f.s /= sum;
-                break;
-
-              // a__de_
-              case 19:
-                sum = a.s + d.s + e.s;
-                a.s /= sum;
-                d.s /= sum;
-                e.s /= sum;
-                break;
-
-              // abc_e_
-              case 29:
-                sum = a.s + b.s + c.s + d.s;
-                a.s /= sum;
-                b.s /= sum;
-                c.s /= sum;
-                e.s /= sum;
-                break;
-
-              // abc__f
-              case 30:
-                sum = a.s + b.s + c.s + f.s;
-                a.s /= sum;
-                b.s /= sum;
-                c.s /= sum;
-                f.s /= sum;
-                break;
-
-              // ab_de_
-              case 21:
-              case 23:
-                sum = a.s + b.s + d.s + e.s;
-                a.s /= sum;
-                b.s /= sum;
-                d.s /= sum;
-                e.s /= sum;
-                break;
-
-              // a_cde_
-              case 22:
-                sum = a.s + c.s + d.s + e.s;
-                a.s /= sum;
-                c.s /= sum;
-                d.s /= sum;
-                e.s /= sum;
-                break;
-
-              // abcde_
-              case 24:
-              case 25:
-              case 31:
-                sum = a.s + b.s + c.s + d.s + e.s;
-                a.s /= sum;
-                b.s /= sum;
-                c.s /= sum;
-                d.s /= sum;
-                e.s /= sum;
-                break;
-
-              // abcdef
-              case 32:
-                sum = a.s + b.s + c.s + d.s + e.s + f.s;
-                a.s /= sum;
-                b.s /= sum;
-                c.s /= sum;
-                d.s /= sum;
-                e.s /= sum;
-                f.s /= sum;
-                break;
-              default:
-                break;
-            }
-            */
     }
   }
 
@@ -220,7 +93,9 @@ struct DX7 {
     switch (algorithm) {
       default:
       case 1:
-        return (a(b()) + c(d(e(_ = f(_))))) / (a.s + c.s);
+        _ = f(_);
+        float v = a(b()) + c(d(e(_))));
+        return v / (a.s + c.s);
       case 2:
         return (a(_ = b(_)) + c(d(e(f())))) / (a.s + c.s);
       case 3:

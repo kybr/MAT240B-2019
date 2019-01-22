@@ -12,6 +12,7 @@ This course surveys established techniques for audio synthesis and digital signa
 
 Find the Github repository here: [MAT240B-2019]
 
+- [2019-01-22](2019-01-22.html)
 - [2019-01-17](2019-01-17.html)
 - [2019-01-15](2019-01-15.html)
 

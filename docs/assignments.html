@@ -103,10 +103,58 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </span></span> with the reading. Submit a reading response by creating a <a href="https://drive.google.com">Google Document</a> and sharing it with me. Title your document with the name of the class, your name, and the assignment number. For instance, Frank Zappa might use <em>MAT201B Frank Zappa Assignment 4</em> as the title of his response to reading assignment 4.</p>
 <p>For each programming assignment, submit your code by pushing it to your <a href="https://github.com">Github</a> repository for this class. Unless the assignment specifies otherwise, submit your programming assignment solution as a single <em>.cpp</em> placed in a folder named <em>assignment</em>.</p>
 </section>
+<section id="assignment-2-due-2019-01-28-by-1700" class="level2">
+<h2>Assignment 2 | Due 2019-01-28 by 1700</h2>
+<p>Read chapters 5 and 6 of <em>Real Sound Synthesis for Interactive Applications</em> (Cook 2002), <em>Software for Spectral Analysis, Editing, and Synthesis</em> (Klingbeil 2005), and <em>…a comprehensive list of window functions…</em> (Heinzel 2002). The concepts and practical information in these reading are critical to our next subject, analysis/resynthesis, so make sure to do these readings.</p>
+<p>Write a C++ program named <em>extract_links.cpp</em> that uses <code>std::regex</code> to identify and extract all the links from HTML given on the standard input. Each link has a <em>name</em> and a <em>target</em>. Print these as “name –&gt; target” on the standard output in the order they are found. For instance, if we run our program on the SPEAR website:</p>
+<pre><code>c++ -std=c++11 extract_links.cpp -o extract_links
+curl http://www.klingbeil.com/spear/ | ./extract_links</code></pre>
+<p>We might get this output on the terminal:</p>
+<pre><code>SPEAR home --&gt; /spear/
+help --&gt; /spear/analysis.html
+downloads --&gt; /spear/downloads/
+main --&gt; /
+vitae --&gt; /cv.html
+music --&gt; /music.html
+photos --&gt; /photos/
+links --&gt; /connect.html
+Click here to download --&gt; downloads
+Click here to download --&gt; downloads
+downloads --&gt; downloads
+downloads --&gt; downloads
+downloads --&gt; downloads
+Help page --&gt; analysis.html
+ICMC paper “Software for Spectral Analysis, Editing, and Synthesis.” --&gt; /papers/spearfinal05.pdf
+&lt;i&gt;Spectral Analysis, Editing, and Resynthesis: Methods and Applications&lt;/i&gt; --&gt; /data/Klingbeil_Dissertation_web.pdf
+download page --&gt; downloads/
+SPEAR home --&gt; /spear/
+help --&gt; /spear/analysis.html
+downloads --&gt; /spear/downloads/
+main --&gt; /
+vitae --&gt; /cv.html
+music --&gt; /music.html
+photos --&gt; /photos/
+links --&gt; /connect.html</code></pre>
+<p>Use this code to start:</p>
+<div class="sourceCode" id="lst:histogram"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:histogram-1" title="1"><span class="pp">#include </span><span class="im">&lt;regex&gt;</span><span class="pp"> </span><span class="co">// regex</span></a>
+<a class="sourceLine" id="lst:histogram-2" title="2"><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></a>
+<a class="sourceLine" id="lst:histogram-3" title="3"><span class="kw">using</span> <span class="kw">namespace</span> std;</a>
+<a class="sourceLine" id="lst:histogram-4" title="4"><span class="dt">int</span> main() {</a>
+<a class="sourceLine" id="lst:histogram-5" title="5">  <span class="cf">while</span> (<span class="kw">true</span>) {</a>
+<a class="sourceLine" id="lst:histogram-6" title="6">    string line;</a>
+<a class="sourceLine" id="lst:histogram-7" title="7">    getline(cin, line);</a>
+<a class="sourceLine" id="lst:histogram-8" title="8"></a>
+<a class="sourceLine" id="lst:histogram-9" title="9">    <span class="co">// do things</span></a>
+<a class="sourceLine" id="lst:histogram-10" title="10">  }</a>
+<a class="sourceLine" id="lst:histogram-11" title="11">}</a></code></pre></div>
+<p>Read these: <a href="https://en.cppreference.com/w/cpp/regex">regex</a>, <a href="https://en.cppreference.com/w/cpp/language/string_literal">“raw” string literal</a>, <a href="https://en.cppreference.com/w/cpp/regex/match_results">match_results</a>, <a href="https://en.wikipedia.org/wiki/Regular_expression">Regular Expressions</a>.</p>
+</section>
 <section id="assignment-1-due-2019-01-21-by-1700" class="level2">
 <h2>Assignment 1 | Due 2019-01-21 by 1700</h2>
-<p>With Chowning’s 1973 paper in mind, study <em>Synthesis of Quasi-Bandlimited Analog Waveforms Using Frequency Modulation</em> (Schoffhauzer 2005). This FM technique establishes parameters—Consider referring to <a href="https://en.wikipedia.org/wiki/Parametrization_(geometry)">parameterization</a>. With Stilson’s 1996 paper in mind, study <em>Hard Sync Without Aliasing</em> (Brandt 2001); How does this paper compare to Stilson’s? Finally, read chapters 1 and 2 of <em>Numerical Sound Synthesis</em> (Bilbao 2009).</p>
-<p>Write a C++ program that calculates word frequency and produces a list of unique words, sorted by frequency (most frequent words first). Your program should read in plain-text files such as books found on <a href="https://www.gutenberg.org">Project Guttenberg</a>. For instance, <a href="https://www.gutenberg.org/files/50109/50109-0.txt">The Mysterious Stranger</a> (for me) results in this output:</p>
+<p>With Chowning’s 1973 paper in mind, study <em>Synthesis of Quasi-Bandlimited Analog Waveforms Using Frequency Modulation</em> (Schoffhauzer 2005). This FM technique establishes parameters—Consider referring to <a href="https://en.wikipedia.org/wiki/Parametrization_(geometry)">parameterization</a>. With Stilson’s 1996 paper in mind<span><label for="sn-2" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-2" class="margin-toggle"/><span class="sidenote">This text on <a href="http://musicdsp.org/files/waveforms.txt">BLIT integration</a> might help with understanding Stilson 1996.<br />
+<br />
+</span></span>, study <em>Hard Sync Without Aliasing</em> (Brandt 2001); How does this paper compare to Stilson’s? Finally, read chapters 1 and 2 of <em>Numerical Sound Synthesis</em> (Bilbao 2009).</p>
+<p>Write a C++ program named <em>word_histogram.cpp</em> that calculates word frequency and produces a list of unique words, sorted by frequency (most frequent words first). Your program should read in plain-text files such as books found on <a href="https://www.gutenberg.org">Project Guttenberg</a>. For instance, <a href="https://www.gutenberg.org/files/50109/50109-0.txt">The Mysterious Stranger</a> (for me) results in this output:</p>
 <pre><code>1649:the
 926:to
 854:of
@@ -136,6 +184,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 169:He
 169:would
 ...</code></pre>
+<p>To compile and execute the code and get this result printed to the terminal, we use a few commands on the terminal as well as <a href="https://www.tutorialspoint.com/unix/unix-io-redirections.htm">redirection</a>:</p>
+<pre><code>curl http://www.gutenberg.org/files/50109/50109-0.txt &gt; The-Mysterious-Stranger.txt
+c++ word_histogram.cpp -o word_histogram
+./word_histogram &lt; The-Mysterious-Stranger.txt</code></pre>
 <p>You will almost certainly need to refer to documentation these: <a href="http://www.cplusplus.com/reference/utility/pair">pair</a>, <a href="http://www.cplusplus.com/reference/unordered_map/unordered_map">unorded_map</a>, and <a href="http://www.cplusplus.com/reference/algorithm/sort">sort</a>. Start with the code below:</p>
 <div class="sourceCode" id="lst:histogram"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:histogram-1" title="1"><span class="pp">#include </span><span class="im">&lt;algorithm&gt;</span><span class="pp">      </span><span class="co">// sort</span></a>
 <a class="sourceLine" id="lst:histogram-2" title="2"><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span><span class="pp">       </span><span class="co">// cin, cout, printf</span></a>
@@ -166,7 +218,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <section id="assignment-0-due-2019-01-14-by-1700" class="level2">
 <h2>Assignment 0 | Due 2019-01-14 by 1700</h2>
 <p>Read and study <em>The Synthesis of Complex Audio Spectra by Means of Frequency Modulation (Chowning 1973)</em> and <em>Alias-Free Digital Synthesis of Classic Analog Waveforms (Stilson 1996)</em></p>
-<p>Write a C++ program that accepts sentences typed on the terminal, printing each sentence with its words reversed<span><label for="sn-2" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-2" class="margin-toggle"/><span class="sidenote">Reverse each word of the sentence individually. For instance: “this is the truth” becomes “siht si eht hturt”.<br />
+<p>Write a C++ program that accepts sentences typed on the terminal, printing each sentence with its words reversed<span><label for="sn-3" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-3" class="margin-toggle"/><span class="sidenote">Reverse each word of the sentence individually. For instance: “this is the truth” becomes “siht si eht hturt”.<br />
 <br />
 </span></span>. You may start with the code below.</p>
 <div class="sourceCode" id="lst:starter_code"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:starter_code-1" title="1"><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></a>
