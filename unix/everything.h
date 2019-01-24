@@ -16,6 +16,8 @@ namespace diy {
 // constants specific to audio
 //
 const float SAMPLE_RATE = 44100;
+const float pi =
+    3.141592653589793238462643383279502884197169399375105820974944592307816406286;
 
 // common "helper" functions
 //
@@ -29,6 +31,8 @@ float scale(float value, float low, float high, float low_, float high_) {
 float uniform(float low, float high) {
   return low + (high - low) * float(rand()) / RAND_MAX;
 }
+
+void say(float f) { printf("%f\n", f); }
 
 }  // namespace diy
 
