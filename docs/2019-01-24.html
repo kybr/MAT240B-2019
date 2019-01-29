@@ -34,25 +34,38 @@
 <header>
 <h1 class="title">2019-01-24 | Band-Limited</h1>
 </header>
+<p>Regex to <a href="https://github.com/AlloSphere-Research-Group/allolib/blob/master/src/util/ui/al_Parameter.cpp#L157">remove leading and trailing slashes</a></p>
 <ul>
 <li>What is the spectrum of a sin oscillator with feedback modulation?</li>
-<li>Quasi-Bandlimited w/ Frequency Modulation</li>
+<li>Quasi-Bandlimited w/ Frequency Modulation
+<ul>
+<li>See <code>Sine-With-Feedback.maxpat</code> (corrected)</li>
+<li>See <code>unix/quasi.cpp</code> (minimally modified from the paper)</li>
+</ul></li>
 <li>Bandlimited signal construction
 <ul>
-<li>Bandlimited Impulse
+<li><a href="https://en.wikipedia.org/wiki/Fourier_series">Fourier series</a></li>
+<li>Saw (bandlimited)
 <ul>
+<li><code>+= sin(phase * h * pi * 2) / h</code></li>
+</ul></li>
+<li><a href="https://en.wikipedia.org/wiki/Gibbs_phenomenon">Gibbs phenomenon</a></li>
+<li>Impulse (bandlimited)
+<ul>
+<li><code>+= sin(phase * h * pi * 2)</code></li>
 <li>By construction (offline)</li>
 <li>frequency sweep</li>
 </ul></li>
 <li>Bandlimited Impulse Train (BLIT)</li>
 <li>Types of interpolation: <a href="http://paulbourke.net/miscellaneous/interpolation/">Interpolation methods</a>
 <ul>
-<li>linear</li>
+<li>linear: <span class="math inline">A*(1-t) + B*t</span></li>
 <li>cubic (polynomial)</li>
 <li>sinc (<span class="math inline">sin(x)/x</span>)</li>
 </ul></li>
-<li>Sinc Interpolation: Construct a Band-Limited Impulse
+<li>Sinc Interpolation
 <ul>
+<li><a href="https://ccrma.stanford.edu/~jos/resample/">resampling</a></li>
 <li><a href="https://www.dsprelated.com/freebooks/pasp/Windowed_Sinc_Interpolation.html">Windowed Sinc Interpolation (DSPrelated)</a></li>
 <li><a href="https://ccrma.stanford.edu/~jos/pasp/Windowed_Sinc_Interpolation.html">Windowed Sinc Interpolation (CCRMA)</a></li>
 <li><a href="https://demonstrations.wolfram.com/SincInterpolationForSignalReconstruction/">Sinc Interpolation for Signal Reconstruction</a></li>

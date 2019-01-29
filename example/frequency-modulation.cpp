@@ -39,12 +39,18 @@ struct Operator : Phasor {
 struct DX7 {
   // This is a C++ pattern that allows us to refer to the 6 operators
   // both as an array and as letters (a, b, c, d, etc.)
+  /*
+   * this fails in gcc in Linux :(
   union {
     struct {
       Operator a, b, c, d, e, f;
     };
     Operator op[6];
   };
+  */
+  Operator op[6];
+  Operator &a = op[0], &b = op[1], &c = op[2], &d = op[3], &e = op[4],
+           &f = op[5];
 
   // vector<function<float(void)>> fun;
   // inline float foo() { return (a(b()) + c(d(e(_ = f(_))))) / 2; }
