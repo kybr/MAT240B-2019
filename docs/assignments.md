@@ -14,17 +14,17 @@ For each programming assignment, submit your code by pushing it to your [Github]
 
 ## Assignment 3 | Due 2019-02-04 by 1700
 
-Read chapter 9 of _Numerical Sound Synthesis - Acoustic tubes.pdf_ on acoustic tubes and chapter 4 of _Real Sound Synthesis for Interactive Applications_ (Cook 2002) on modal synthesis.
+Read chapter 9 of _Numerical Sound Synthesis_ (Bilbao 2009) on acoustic tubes and chapter 4 of _Real Sound Synthesis for Interactive Applications_ (Cook 2002) on modal synthesis.
 
 Write a C++ program that executes a bandlimited impulse sweep. Copy the code below to a file named _impulse-sweep.cpp_ and put it in the `unix/` folder of the course repository.
 
-``` {#lst;:impulse_sweep .cpp}
+``` {#lst::impulse_sweep .cpp}
 #include "everything.h"
 using namespace diy;
 
 int main(int argc, char* argv[]) {
   // calculate and output a bandlimited impulse whose
-  // frequency starts at Nyquist and ends near midi 0.
+  // frequency starts near Nyquist and ends near midi 0.
 
   // make all calculations per-sample. determine the
   // current frequency, the number of harmonics to use,

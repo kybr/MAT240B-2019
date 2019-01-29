@@ -105,13 +105,24 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </section>
 <section id="assignment-3-due-2019-02-04-by-1700" class="level2">
 <h2>Assignment 3 | Due 2019-02-04 by 1700</h2>
-<p>Read chapter 9 of <em>Numerical Sound Synthesis - Acoustic tubes.pdf</em> on acoustic tubes and chapter 4 of <em>Real Sound Synthesis for Interactive Applications</em> (Cook 2002) on modal synthesis.</p>
+<p>Read chapter 9 of <em>Numerical Sound Synthesis</em> (Bilbao 2009) on acoustic tubes and chapter 4 of <em>Real Sound Synthesis for Interactive Applications</em> (Cook 2002) on modal synthesis.</p>
 <p>Write a C++ program that executes a bandlimited impulse sweep. Copy the code below to a file named <em>impulse-sweep.cpp</em> and put it in the <code>unix/</code> folder of the course repository.</p>
-<p>``` {#lst;:impulse_sweep .cpp} #include “everything.h” using namespace diy;</p>
-<p>int main(int argc, char* argv[]) { // calculate and output a bandlimited impulse whose // frequency starts at Nyquist and ends near midi 0.</p>
-<p>// make all calculations per-sample. determine the // current frequency, the number of harmonics to use, // and the current amplitude. increment phase.</p>
-<p>// output a finite number of floats, one float per line say(0.0); // use this function</p>
-<p>// use other functions and constants from everything.h } ```</p>
+<div class="sourceCode" id="lst::impulse_sweep"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst::impulse_sweep-1" title="1"><span class="pp">#include </span><span class="im">&quot;everything.h&quot;</span></a>
+<a class="sourceLine" id="lst::impulse_sweep-2" title="2"><span class="kw">using</span> <span class="kw">namespace</span> diy;</a>
+<a class="sourceLine" id="lst::impulse_sweep-3" title="3"></a>
+<a class="sourceLine" id="lst::impulse_sweep-4" title="4"><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="dt">char</span>* argv[]) {</a>
+<a class="sourceLine" id="lst::impulse_sweep-5" title="5">  <span class="co">// calculate and output a bandlimited impulse whose</span></a>
+<a class="sourceLine" id="lst::impulse_sweep-6" title="6">  <span class="co">// frequency starts near Nyquist and ends near midi 0.</span></a>
+<a class="sourceLine" id="lst::impulse_sweep-7" title="7"></a>
+<a class="sourceLine" id="lst::impulse_sweep-8" title="8">  <span class="co">// make all calculations per-sample. determine the</span></a>
+<a class="sourceLine" id="lst::impulse_sweep-9" title="9">  <span class="co">// current frequency, the number of harmonics to use,</span></a>
+<a class="sourceLine" id="lst::impulse_sweep-10" title="10">  <span class="co">// and the current amplitude. increment phase.</span></a>
+<a class="sourceLine" id="lst::impulse_sweep-11" title="11"></a>
+<a class="sourceLine" id="lst::impulse_sweep-12" title="12">  <span class="co">// output a finite number of floats, one float per line</span></a>
+<a class="sourceLine" id="lst::impulse_sweep-13" title="13">  say(<span class="fl">0.0</span>); <span class="co">// use this function</span></a>
+<a class="sourceLine" id="lst::impulse_sweep-14" title="14"></a>
+<a class="sourceLine" id="lst::impulse_sweep-15" title="15">  <span class="co">// use other functions and constants from everything.h</span></a>
+<a class="sourceLine" id="lst::impulse_sweep-16" title="16">}</a></code></pre></div>
 <p>Build and run this code on the terminal, execute the commands below:</p>
 <pre><code>cd path/to/MAT240B-2019
 cd unix
