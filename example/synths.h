@@ -558,14 +558,14 @@ struct Table : Phasor, Array {
 struct Noise : Table {
   Noise(unsigned size = 20 * 44100) {
     resize(size);
-    for (unsigned i = 0; i < size; ++i) data[i] = rnd::uniformS();
+    for (unsigned i = 0; i < size; ++i) data[i] = al::rnd::uniformS();
   }
 };
 
 struct Normal : Table {
   Normal(unsigned size = 20 * 44100) {
     resize(size);
-    for (unsigned i = 0; i < size; ++i) data[i] = rnd::normal();
+    for (unsigned i = 0; i < size; ++i) data[i] = al::rnd::normal();
     float maximum = 0;
     for (unsigned i = 0; i < size; ++i)
       if (abs(data[i]) > maximum) maximum = abs(data[i]);
