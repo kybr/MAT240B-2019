@@ -34,6 +34,10 @@
 <header>
 <h1 class="title">2019-01-29 | Analysis / Resynthesis</h1>
 </header>
+<ul>
+<li>Homework solutions…</li>
+<li>Checkout <a href="https://www.kadenze.com/courses/physics-based-sound-synthesis-for-games-and-interactive-systems/info">Physics-Based Sound Synthesis for Games and Interactive Systems</a></li>
+</ul>
 <section id="analysis" class="level2">
 <h2>Analysis</h2>
 <ul>
@@ -55,6 +59,27 @@
 <li>(maybe) classify frame as “pitchy” or “noisy”</li>
 <li>(later) use Sinusoids and Band-passed noise to synthesis sound given analysis</li>
 </ul>
+<p>Listing: Analyse</p>
+<pre id="lst:analyse"><code>int main(int argc, char* argv[]) {
+  // open sound file for analysis
+  // open output file
+  // load samples
+  // for each window of samples
+  //   calculate: mean/max magnitude
+  //   find maxima (frequency and magnitude)
+  //   sort maxima by magnitude
+  //   save top 10
+}</code></pre>
+<p>Listing: Synthesize</p>
+<pre id="lst:synthesize"><code>int main(int argc, char* argv[]) {
+  // load analysis file
+  // set up sinusoid oscillators
+  // set up band-passed noise oscillators
+  // loop
+  //   given time parameter, generate interpolated frame
+  //   dispatch oscillators to support peaks and spectral shape
+  //   (maybe) advance time
+}</code></pre>
 <ul>
 <li><a href="2019-01-24.html">2019-01-24</a></li>
 </ul>
