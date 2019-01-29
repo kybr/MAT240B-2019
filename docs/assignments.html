@@ -103,6 +103,23 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </span></span> with the reading. Submit a reading response by creating a <a href="https://drive.google.com">Google Document</a> and sharing it with me. Title your document with the name of the class, your name, and the assignment number. For instance, Frank Zappa might use <em>MAT201B Frank Zappa Assignment 4</em> as the title of his response to reading assignment 4.</p>
 <p>For each programming assignment, submit your code by pushing it to your <a href="https://github.com">Github</a> repository for this class. Unless the assignment specifies otherwise, submit your programming assignment solution as a single <em>.cpp</em> placed in a folder named <em>assignment</em>.</p>
 </section>
+<section id="assignment-3-due-2019-02-04-by-1700" class="level2">
+<h2>Assignment 3 | Due 2019-02-04 by 1700</h2>
+<p>Read chapter 9 of <em>Numerical Sound Synthesis - Acoustic tubes.pdf</em> on acoustic tubes and chapter 4 of <em>Real Sound Synthesis for Interactive Applications</em> (Cook 2002) on modal synthesis.</p>
+<p>Write a C++ program that executes a bandlimited impulse sweep. Copy the code below to a file named <em>impulse-sweep.cpp</em> and put it in the <code>unix/</code> folder of the course repository.</p>
+<p>``` {#lst;:impulse_sweep .cpp} #include “everything.h” using namespace diy;</p>
+<p>int main(int argc, char* argv[]) { // calculate and output a bandlimited impulse whose // frequency starts at Nyquist and ends near midi 0.</p>
+<p>// make all calculations per-sample. determine the // current frequency, the number of harmonics to use, // and the current amplitude. increment phase.</p>
+<p>// output a finite number of floats, one float per line say(0.0); // use this function</p>
+<p>// use other functions and constants from everything.h } ```</p>
+<p>Build and run this code on the terminal, execute the commands below:</p>
+<pre><code>cd path/to/MAT240B-2019
+cd unix
+make
+./impulse-sweep.exe | ./write
+open out.wav</code></pre>
+<p>Investigate the waveform and spectrum of the output file. Is it what you expect? If not, why not?</p>
+</section>
 <section id="assignment-2-due-2019-01-28-by-1700" class="level2">
 <h2>Assignment 2 | Due 2019-01-28 by 1700</h2>
 <p>Read chapters 5 and 6 of <em>Real Sound Synthesis for Interactive Applications</em> (Cook 2002), <em>Software for Spectral Analysis, Editing, and Synthesis</em> (Klingbeil 2005), and <em>…a comprehensive list of window functions…</em> (Heinzel 2002). The concepts and practical information in these reading are critical to our next subject, analysis/resynthesis, so make sure to do these readings.</p>

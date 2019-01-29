@@ -4,8 +4,7 @@
   <meta charset="utf-8">
   <meta name="generator" content="pandoc">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <meta name="author" content="Karl Yerkes">
-  <title>MAT 240B</title>
+  <title>2019-01-29 | Analysis / Resynthesis</title>
   <style type="text/css">code{white-space: pre;}</style>
   <link rel="stylesheet" href="latex.css">
   <link rel="stylesheet" href="pandoc-solarized.css">
@@ -33,21 +32,33 @@
 </div>
 <article>
 <header>
-<h1 class="title">MAT 240B</h1>
-<p class="subtitle">Digital Audio Programming - Synthesis and Effects</p>
-<p class="byline">Karl Yerkes</p>
+<h1 class="title">2019-01-29 | Analysis / Resynthesis</h1>
 </header>
-<section>
-<p>This course surveys established techniques for audio synthesis and digital signal processing applied to sound. We explore and implement additive, subtractive, frequency modulation and granular synthesis techniques and we cover digital audio effects such as reverb, filter, phase vocoder, and dynamic range compression. We also explore analysis/resynthesis and physical modeling.</p>
-</section>
-<p>Find the Github repository here: <a href="http://github.com/kybr/MAT240B-2019">MAT240B-2019</a></p>
+<section id="analysis" class="level2">
+<h2>Analysis</h2>
 <ul>
-<li><a href="2019-01-29.html">2019-01-29</a></li>
-<li><a href="2019-01-24.html">2019-01-24</a></li>
-<li><a href="2019-01-22.html">2019-01-22</a></li>
-<li><a href="2019-01-17.html">2019-01-17</a></li>
-<li><a href="2019-01-15.html">2019-01-15</a></li>
+<li>break into “frames”
+<ul>
+<li>choose: window size, window function, overlap</li>
+</ul></li>
+<li>get spectrum
+<ul>
+<li>(probably) ignore phase spectrum</li>
+<li>calculate statistics
+<ul>
+<li>find peaks</li>
+<li>spectral shape<span><label for="sn-1" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-1" class="margin-toggle"/><span class="sidenote">Imagine ways to approximate arbitrary functions… consider summing many <a href="https://en.wikipedia.org/wiki/Gaussian_function">Gaussian</a> functions.<br />
+<br />
+</span></span>, slope, center</li>
+</ul></li>
+</ul></li>
+<li>(maybe) classify frame as “pitchy” or “noisy”</li>
+<li>(later) use Sinusoids and Band-passed noise to synthesis sound given analysis</li>
 </ul>
+<ul>
+<li><a href="2019-01-24.html">2019-01-24</a></li>
+</ul>
+</section>
 </article>
 </body>
 </html>

@@ -12,6 +12,42 @@ For each programming assignment, submit your code by pushing it to your [Github]
 
 </section>
 
+## Assignment 3 | Due 2019-02-04 by 1700
+
+Read chapter 9 of _Numerical Sound Synthesis - Acoustic tubes.pdf_ on acoustic tubes and chapter 4 of _Real Sound Synthesis for Interactive Applications_ (Cook 2002) on modal synthesis.
+
+Write a C++ program that executes a bandlimited impulse sweep. Copy the code below to a file named _impulse-sweep.cpp_ and put it in the `unix/` folder of the course repository.
+
+``` {#lst;:impulse_sweep .cpp}
+#include "everything.h"
+using namespace diy;
+
+int main(int argc, char* argv[]) {
+  // calculate and output a bandlimited impulse whose
+  // frequency starts at Nyquist and ends near midi 0.
+
+  // make all calculations per-sample. determine the
+  // current frequency, the number of harmonics to use,
+  // and the current amplitude. increment phase.
+
+  // output a finite number of floats, one float per line
+  say(0.0); // use this function
+
+  // use other functions and constants from everything.h
+}
+```
+
+Build and run this code on the terminal, execute the commands below:
+
+    cd path/to/MAT240B-2019
+    cd unix
+    make
+    ./impulse-sweep.exe | ./write
+    open out.wav
+
+Investigate the waveform and spectrum of the output file. Is it what you expect? If not, why not?
+
+
 ## Assignment 2 | Due 2019-01-28 by 1700
 
 Read chapters 5 and 6 of _Real Sound Synthesis for Interactive Applications_ (Cook 2002), _Software for Spectral Analysis, Editing, and Synthesis_ (Klingbeil 2005), and _...a comprehensive list of window functions..._ (Heinzel 2002). The concepts and practical information in these reading are critical to our next subject, analysis/resynthesis, so make sure to do these readings.
