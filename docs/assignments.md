@@ -47,6 +47,9 @@ Build and run this code on the terminal, execute the commands below:
 
 Investigate the waveform and spectrum of the output file. Is it what you expect? If not, why not?
 
+Next, modify the code to make a) a sawtooth (`sawtooth-sweep.cpp`) and b) a square wave (`square-sweep.cpp`).
+
+
 
 ## Assignment 2 | Due 2019-01-28 by 1700
 
