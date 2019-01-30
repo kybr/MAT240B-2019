@@ -13,68 +13,122 @@ using namespace diy;
 #include <fstream>
 using namespace std;
 
-int main(int argc, char* argv[]) {
-  string fileName = "../sound/6.wav";
-  if (argc > 1) fileName = argv[1];
-  SoundFile soundFile;
-  if (!soundFile.openRead(fileName)) {
-    cout << "failed to open " << fileName << endl;
-    exit(-1);
+const int WINDOW_SIZE = 2048;
+const int FFT_SIZE = 1 << 18;
+
+struct Peak {
+  float frequency, magnitude;
+};
+
+struct Frame {
+  vector<Peak> peak;
+  float frameTimeSeconds;
+  float rootMeanSquare;
+  float amplitudeMinimum;
+  float amplitudeMaximum;
+  float zeroCrossingRate;
+  float magnitudeMaximum;
+  float magnitudeSum;
+  float magnitudeMean;
+  float spectralCentroid;
+  void print() {
+    cout << frameTimeSeconds << ' ';
+    cout << rootMeanSquare << ' ';
+    cout << amplitudeMinimum << ' ';
+    cout << amplitudeMaximum << ' ';
+    cout << zeroCrossingRate << ' ';
+    cout << magnitudeMaximum << ' ';
+    cout << magnitudeSum << ' ';
+    cout << magnitudeMean << ' ';
+    cout << spectralCentroid << ' ';
+    for (auto& p : peak) cout << p.frequency << ':' << p.magnitude << ' ';
+    cout << endl;
   }
+};
+
+void load(vector<Frame>& frame, string fileName) {
   vector<float> data;
-  data.resize(soundFile.frames());
-  soundFile.readAll(&data[0]);
+  float sampleRate;
+
+  {
+    SoundFile soundFile;
+    if (!soundFile.openRead(fileName)) {
+      cout << "failed to open " << fileName << endl;
+      exit(-1);
+    }
+    data.resize(soundFile.frames());
+    soundFile.readAll(&data[0]);
+    sampleRate = soundFile.frameRate();
+  }
 
   STFT stft(
-      2048,      // window size
-      2048 / 4,  // hop size; number of samples between transforms
-      8192 -
-          2048,  // pad size; number of zero-valued samples appended to window
-      HANN,  // window type: BARTLETT, BLACKMAN, BLACKMAN_HARRIS, HAMMING, HANN,
-             // WELCH, NYQUIST, or RECTANGLE
+      WINDOW_SIZE,
+      WINDOW_SIZE / 4,         // hop size
+      FFT_SIZE - WINDOW_SIZE,  // pad size; appended to window
+      HANN,                    // window type:
       MAG_PHASE  // format of frequency samples: COMPLEX, MAG_PHASE, or MAG_FREQ
   );
 
-  // XXX it is important to tell Gamma the sample rate
-  // otherwise, it assumes a sample rate of 1 (1 Hz, 1 sample/second)
-  gam::Sync::master().spu(SAMPLE_RATE);
-
-  ofstream output(fileName + "-analysis.txt", ios::trunc);
+  // It is important to tell Gamma the sample rate otherwise, it assumes a
+  // sample rate of 1 (1 Hz, 1 sample/second)!
+  gam::Sync::master().spu(sampleRate);
 
   for (int i = 0; i < data.size(); ++i)
     if (stft(data[i])) {
-      // say where we are in the sound clip
-      output << (float)i / SAMPLE_RATE << " ";
+      // push a new frame and make an alias, f
+      frame.push_back(Frame());
+      Frame& f(frame.back());
 
-      // compute some stats
+      // calculate time-domain statistics
       //
-      double magnitudeTotal = 0, magnitudeMaximum = 0;
-      for (int b = 0; b < stft.numBins(); ++b) {
-        magnitudeTotal += stft.bin(b)[0];
-        if (magnitudeMaximum < stft.bin(b)[0])
-          magnitudeMaximum = stft.bin(b)[0];
+      f.frameTimeSeconds = i / sampleRate;
+      f.amplitudeMinimum = 0;
+      f.amplitudeMaximum = 0;
+      for (int j = 0; j < WINDOW_SIZE; ++j) {
+        if (data[i - j] > f.amplitudeMaximum) f.amplitudeMaximum = data[i - j];
+        if (data[i - j] < f.amplitudeMinimum) f.amplitudeMinimum = data[i - j];
       }
-      output << magnitudeTotal << " ";
-      float magnitudeMean = magnitudeTotal / stft.numBins();
-      output << magnitudeMean << " ";
-      output << magnitudeMaximum << " ";
+      double t = 0;
+      for (int j = 0; j < WINDOW_SIZE; ++j) t += data[i - j] * data[i - j];
+      f.rootMeanSquare = sqrt(t / WINDOW_SIZE);
+      f.zeroCrossingRate = 0;
+      for (int j = 1; j < WINDOW_SIZE; ++j)
+        if (data[i - j - 1] * data[i - j] < 0) f.zeroCrossingRate += 1.0;
+      f.zeroCrossingRate /= (float)WINDOW_SIZE / SAMPLE_RATE;
 
-      // find peaks, sort by magnitude
+      // calculate frequency-domain statistics
       //
-      struct Peak {
-        double magnitude, frequency;
-      };
-      vector<Peak> peakList;
+      f.magnitudeSum = 0;
+      for (int b = 0; b < stft.numBins(); ++b) f.magnitudeSum += stft.bin(b)[0];
+      f.magnitudeMaximum = 0;
+      for (int b = 0; b < stft.numBins(); ++b)
+        if (f.magnitudeMaximum < stft.bin(b)[0])
+          f.magnitudeMaximum = stft.bin(b)[0];
+      f.magnitudeMean = f.magnitudeSum / stft.numBins();
+      f.spectralCentroid = 0;
+      for (int b = 0; b < stft.numBins(); ++b)
+        f.spectralCentroid += stft.bin(b)[0] * stft.binFreq() * b;
+      f.spectralCentroid /= f.magnitudeSum;
+
+      // collect every maxima
       for (int b = 1; b < stft.numBins() - 1; ++b) {
         float m[3]{stft.bin(b - 1)[0], stft.bin(b)[0], stft.bin(b + 1)[0]};
         if (m[1] > m[0] && m[1] > m[2])
-          peakList.push_back({m[1], stft.binFreq() * b});
+          f.peak.push_back({m[1], static_cast<float>(stft.binFreq() * b)});
       }
-      sort(peakList.begin(), peakList.end(), [](const Peak& a, const Peak& b) {
-        return a.magnitude > b.magnitude;
+      // sort maxima by magnitude
+      sort(f.peak.begin(), f.peak.end(), [](const Peak& a, const Peak& b) {
+        return a.magnitude < b.magnitude;
       });
-      for (int i = 0; i < min(10, (int)peakList.size()); ++i)
-        output << peakList[i].frequency << ":" << peakList[i].magnitude << " ";
-      output << endl;
+      // throw away all but N peaks
+      f.peak.resize(100);
     }
+}
+
+int main(int argc, char* argv[]) {
+  string fileName = "../sound/6.wav";
+  if (argc > 1) fileName = argv[1];
+  vector<Frame> frame;
+  load(frame, fileName);
+  for (auto& f : frame) f.print();
 }
