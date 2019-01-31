@@ -15,6 +15,7 @@ using namespace std;
 
 const int WINDOW_SIZE = 2048;
 const int FFT_SIZE = 1 << 18;
+const int N = 35;  // number of peaks
 
 struct Peak {
   float magnitude, frequency;
@@ -48,12 +49,35 @@ struct Frame {
   }
 };
 
+struct Oscillator {
+  Phasor phase;
+  Line _frequency;
+  Line amplitude;
+
+  Oscillator() {
+    _frequency.seconds = 0.011;
+    amplitude.seconds = 0.011;
+  }
+
+  void frequency(float hertz) { _frequency.set(hertz); }
+  void level(float db) { amplitude.set(dbtoa(db)); }
+
+  float operator()() {
+    phase.frequency(_frequency());
+    return amplitude() * sine(phase());
+  }
+};
+
 struct MyApp : App {
   string fileName;
   MyApp(int argc, char* argv[]) {
-    fileName = "../sound/6.wav";
+    fileName = "../sound/8.wav";
     if (argc > 1) fileName = argv[1];
   }
+
+  float t = 0;
+
+  vector<Oscillator> oscillator;
 
   vector<Frame> frame;
   void onCreate() override {
@@ -71,13 +95,8 @@ struct MyApp : App {
       sampleRate = soundFile.frameRate();
     }
 
-    STFT stft(WINDOW_SIZE,
-              WINDOW_SIZE / 4,         // hop size
-              FFT_SIZE - WINDOW_SIZE,  // pad size; appended to window
-              HANN,                    // window type:
-              MAG_PHASE  // format of frequency samples: COMPLEX, MAG_PHASE, or
-                         // MAG_FREQ
-    );
+    STFT stft(WINDOW_SIZE, WINDOW_SIZE / 4, FFT_SIZE - WINDOW_SIZE, HANN,
+              MAG_PHASE);
 
     // It is important to tell Gamma the sample rate otherwise, it assumes a
     // sample rate of 1 (1 Hz, 1 sample/second)!
@@ -156,7 +175,7 @@ struct MyApp : App {
           return a.magnitude > b.magnitude;
         });
         // throw away all but N peaks
-        f.peak.resize(5);
+        f.peak.resize(N);
 
         if (1) {
           f.magnitudeMaximum = atodb(f.magnitudeMaximum);
@@ -167,6 +186,26 @@ struct MyApp : App {
       }
     // for (auto& f : frame) f.print();
     // exit(1);
+
+    oscillator.resize(N);
+  }
+
+  void onAnimate(double dt) override {
+    t += dt * 70;
+    if (t > frame.size()) t -= frame.size();
+
+    int left = (int)t;
+    int right = left + 1;
+    if (right >= frame.size()) right -= frame.size();
+    float p = t - left;
+    cout << left << ' ' << right << ' ' << p << endl;
+    Frame &a(frame[left]), b(frame[right]);
+    for (int i = 0; i < oscillator.size(); ++i) {
+      oscillator[i].frequency(a.peak[i].frequency * (1 - p) +
+                              b.peak[i].frequency * p);
+      oscillator[i].level(a.peak[i].magnitude * (1 - p) +
+                          b.peak[i].magnitude * p + 48);
+    }
   }
 
   void onDraw(Graphics& g) override {
@@ -177,6 +216,7 @@ struct MyApp : App {
   void onSound(AudioIOData& io) override {
     while (io()) {
       float f = 0;
+      for (auto& o : oscillator) f += o();
       io.out(0) = f;
       io.out(1) = f;
     }
