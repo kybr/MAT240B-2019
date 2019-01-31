@@ -17,7 +17,8 @@ const int WINDOW_SIZE = 2048;
 const int FFT_SIZE = 1 << 18;
 
 struct Peak {
-  float frequency, magnitude;
+  float magnitude, frequency;
+  // float frequency, magnitude;
 };
 
 struct Frame {
@@ -41,7 +42,8 @@ struct Frame {
     cout << magnitudeSum << ' ';
     cout << magnitudeMean << ' ';
     cout << spectralCentroid << ' ';
-    for (auto& p : peak) cout << p.frequency << ':' << p.magnitude << ' ';
+    for (auto& p : peak)
+      cout << p.frequency << ':' << atodb(p.magnitude) << ' ';
     cout << endl;
   }
 };

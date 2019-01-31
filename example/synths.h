@@ -590,7 +590,7 @@ struct SineArray : Array {
   float operator()(float phase) { return phasor(phase); }
 };
 
-static float sine(float phase) {
+float sine(float phase) {
   static SineArray instance;
   return instance(phase);
 }
