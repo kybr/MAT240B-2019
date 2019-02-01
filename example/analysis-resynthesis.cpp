@@ -191,7 +191,7 @@ struct MyApp : App {
   }
 
   void onAnimate(double dt) override {
-    t += dt * 70;
+    t += dt * 20;
     if (t > frame.size()) t -= frame.size();
 
     int left = (int)t;

@@ -27,7 +27,10 @@ struct Phasor {
   float phase = 0.0;        // on the interval [0, 1)
   float increment = 0.001;  // led to an low F
 
+  void period(float seconds) { frequency(1 / seconds); }
   void frequency(float hertz) {
+    // this function may run per-sample. all this stuff costs performance
+
     // XXX check for INSANE frequencies
     if (hertz > SAMPLE_RATE) {
       printf("hertz > SAMPLE_RATE\n");
@@ -546,6 +549,26 @@ struct Sine : Phasor {
 
 struct Table : Phasor, Array {
   Table(unsigned size = 4096) { resize(size); }
+
+  virtual float operator()() {
+    const float index = phase * data.size();
+    const float v = get(index);
+    Phasor::operator()();
+    return v;
+  }
+};
+
+struct SoundPlayer : Phasor, Array {
+  float sampleRate;
+
+  void load(float* _data, int frameCount, float _sampleRate) {
+    resize(frameCount);
+    for (int i = 0; i < frameCount; ++i) data[i] = _data[i];
+    sampleRate = _sampleRate;
+    rate(1);
+  }
+
+  void rate(float ratio) { period((data.size() / sampleRate) / ratio); }
 
   virtual float operator()() {
     const float index = phase * data.size();
