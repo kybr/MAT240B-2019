@@ -20,7 +20,7 @@ Read _[Karplus-Strong string synthesis]_ and _[Karplus Strong Algorithm]_ and im
 
 1. Implement the most-basic, barely-functional Karplus-Strong string you can. It does not have to change pitch; It does not even have to support tuning to arbitrary pitch. Make the implementation in the offline, UNIX way, like the other algorithms in the `unix/` folder. Name this solution _string-p1.cpp_.
 2. Implement Karplus-Strong using allolib and the offerings in our _synths.h_ header. Make sure this version supports triggering "plucks" and setting the fundamental frequency of the synth. Call this solution _string-p2.cpp_.
-3. Do your own thing. Add or change some element of Karplus-Strong. For instance, use a different kind of filter, allow for dynamically changing the "listening position", or ....?
+3. Do your own thing. Name this code _string-p3.cpp_. Add or change some element of Karplus-Strong. For instance, use a different kind of filter, allow for dynamically changing the "listening position", or introduce some sort of dynamic range compression to generate a "guitar feedback" sound.
 
 
 [Karplus-Strong string synthesis]: https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis
