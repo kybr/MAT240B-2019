@@ -103,6 +103,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </span></span> with the reading. Submit a reading response by creating a <a href="https://drive.google.com">Google Document</a> and sharing it with me. Title your document with the name of the class, your name, and the assignment number. For instance, Frank Zappa might use <em>MAT201B Frank Zappa Assignment 4</em> as the title of his response to reading assignment 4.</p>
 <p>For each programming assignment, submit your code by pushing it to your <a href="https://github.com">Github</a> repository for this class. Unless the assignment specifies otherwise, submit your programming assignment solution as a single <em>.cpp</em> placed in a folder named <em>assignment</em>.</p>
 </section>
+<section id="assignment-4-due-2019-02-13-by-1700" class="level2">
+<h2>Assignment 4 | Due 2019-02-13 by 1700</h2>
+<p>Read/Skim chapters 5-7 of <em>Designing Audio Effect Plug-Ins in C++ With Digital Audio Signal Processing Theory</em> (Pirkle 2013). Pay particular attention to 1) the z-transform and simple filter designs that use it and 2) delays and circular buffers.</p>
+<p>Read <em><a href="https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis">Karplus-Strong string synthesis</a></em> and <em><a href="https://ccrma.stanford.edu/~jos/pasp/Karplus_Strong_Algorithm.html">Karplus Strong Algorithm</a></em> and implement Karplus-Strong:</p>
+<ol type="1">
+<li>Implement the most-basic, barely-functional Karplus-Strong string you can. It does not have to change pitch; It does not even have to support tuning to arbitrary pitch. Make the implementation in the offline, UNIX way, like the other algorithms in the <code>unix/</code> folder. Name this solution <em>string-p1.cpp</em>.</li>
+<li>Implement Karplus-Strong using allolib and the offerings in our <em>synths.h</em> header. Make sure this version supports triggering “plucks” and setting the fundamental frequency of the synth. Call this solution <em>string-p2.cpp</em>.</li>
+<li>Do your own thing. Add or change some element of Karplus-Strong. For instance, use a different kind of filter, allow for dynamically changing the “listening position”, or ….?</li>
+</ol>
+</section>
 <section id="assignment-3-due-2019-02-04-by-1700" class="level2">
 <h2>Assignment 3 | Due 2019-02-04 by 1700</h2>
 <p>Read chapter 9 of <em>Numerical Sound Synthesis</em> (Bilbao 2009) on acoustic tubes and chapter 4 of <em>Real Sound Synthesis for Interactive Applications</em> (Cook 2002) on modal synthesis.</p>

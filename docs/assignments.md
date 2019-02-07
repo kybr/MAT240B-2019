@@ -12,6 +12,21 @@ For each programming assignment, submit your code by pushing it to your [Github]
 
 </section>
 
+## Assignment 4 | Due 2019-02-13 by 1700
+
+Read/Skim chapters 5-7 of _Designing Audio Effect Plug-Ins in C++ With Digital Audio Signal Processing Theory_ (Pirkle 2013). Pay particular attention to 1) the z-transform and simple filter designs that use it and 2) delays and circular buffers.
+
+Read _[Karplus-Strong string synthesis]_ and _[Karplus Strong Algorithm]_ and implement Karplus-Strong:
+
+1. Implement the most-basic, barely-functional Karplus-Strong string you can. It does not have to change pitch; It does not even have to support tuning to arbitrary pitch. Make the implementation in the offline, UNIX way, like the other algorithms in the `unix/` folder. Name this solution _string-p1.cpp_.
+2. Implement Karplus-Strong using allolib and the offerings in our _synths.h_ header. Make sure this version supports triggering "plucks" and setting the fundamental frequency of the synth. Call this solution _string-p2.cpp_.
+3. Do your own thing. Add or change some element of Karplus-Strong. For instance, use a different kind of filter, allow for dynamically changing the "listening position", or ....?
+
+
+[Karplus-Strong string synthesis]: https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis
+[Karplus Strong Algorithm]: https://ccrma.stanford.edu/~jos/pasp/Karplus_Strong_Algorithm.html
+
+
 ## Assignment 3 | Due 2019-02-04 by 1700
 
 Read chapter 9 of _Numerical Sound Synthesis_ (Bilbao 2009) on acoustic tubes and chapter 4 of _Real Sound Synthesis for Interactive Applications_ (Cook 2002) on modal synthesis.
