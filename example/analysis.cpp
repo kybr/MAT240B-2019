@@ -17,27 +17,28 @@ using namespace std;
 const int WINDOW_SIZE = 2048;
 const int FFT_SIZE = 1 << 13;
 
-struct Foo {
-  int i = 0;
-  int j;
-  int k;
-  Foo() : k(0) { j = 0; }
+STFT stft =
+    STFT(WINDOW_SIZE, WINDOW_SIZE / 4, FFT_SIZE - WINDOW_SIZE, HANN, MAG_PHASE);
+
+const int N = 3;
+
+struct Peak {
+  float magnitude, frequency;
+};
+
+struct Frame {
+  vector<Peak> peakList;
+  void print() {
+    for (Peak& p : peakList)  //
+      cout << p.magnitude << ':' << p.frequency << ' ';
+    cout << endl;
+  }
 };
 
 struct MyApp : App {
   string fileName;
-  // STFT(
-  //  unsigned winSize = 1024,
-  //  unsigned hopSize = 256,
-  //  unsigned padSize = 0,
-  //  WindowType winType = RECTANGLE,
-  //  SpectralType specType = COMPLEX,
-  //  unsigned numAux = 0
-  // 	)
-  STFT stft = STFT(WINDOW_SIZE, WINDOW_SIZE / 4, FFT_SIZE - WINDOW_SIZE, HANN,
-                   MAG_PHASE);
-
   MyApp(int argc, char* argv[]) {
+    // example of using the "c++ way" rather than the "C way"
     vector<string> argumentList(argv, argv + argc);
     if (argumentList.size() > 1)
       fileName = argumentList[1];
@@ -45,35 +46,59 @@ struct MyApp : App {
       fileName = "../sound/8.wav";
   }
 
-  Noise noise;
-
-  SoundPlayer soundPlayer;
+  vector<Frame> frameList;
   void onCreate() {
-    SoundFile soundFile;
+    gam::SoundFile soundFile;
     if (!soundFile.openRead(fileName)) {
       cerr << "has died" << endl;
       exit(1);
     }
-    vector<float> v;
-    v.resize(soundFile.frames());
-    soundFile.readAll(&v[0]);
-    soundPlayer.load(&v[0], v.size(), soundFile.frameRate());
+    vector<float> data;
+    data.resize(soundFile.frames());
+    soundFile.readAll(&data[0]);
+    gam::Sync::master().spu(
+        soundFile.frameRate());  // XXX otherwise sample rate is 1Hz
+
+    // for each sample...
+    for (int i = 0; i < data.size(); ++i) {
+      if (stft(data[i])) {
+        // 0. add an empty/default frame to the list of frames
+        //
+        frameList.emplace_back();
+        Frame& frame(frameList.back());  // make an alias
+
+        // 1. find all maxima
+        //
+        for (int i = 1; i < stft.numBins() - 1; ++i) {
+          if ((stft.bin(i)[0] > stft.bin(i + 1)[0]) &&
+              (stft.bin(i)[0] > stft.bin(i - 1)[0])) {
+            // we found a maxima!
+            frame.peakList.push_back(
+                {.magnitude = stft.bin(i)[0],
+                 .frequency = static_cast<float>(stft.binFreq() * i)});
+          }
+        }
+
+        // 2. sort by magnitude in descending order
+        //
+        sort(frame.peakList.begin(), frame.peakList.end(),
+             [](const Peak& a, const Peak& b) {
+               return a.magnitude > b.magnitude;
+             });
+
+        // 3. throw away all but the first N peaks
+        //
+        frame.peakList.resize(N);
+
+        // to test, run this on a sine sweep and look at the output
+        frame.print();
+      }
+    }
   }
 
   void onSound(AudioIOData& io) {
     while (io()) {
-      if (stft(soundPlayer())) {
-        // mess with the spectrum
-        for (int i = 10; i < stft.numBins(); ++i) {
-          // stft.bin(i)[1] = 0;  // reset phase
-          // stft.bin(i)[1] = noise() * M_PI;
-          stft.bin(i)[0] = stft.bin(i - 10)[0];
-        }
-        for (int i = 0; i < 10; ++i) {
-          stft.bin(i)[0] = 0;
-        }
-      }
-      float s = stft();
+      float s = 0;
       io.out(0) = s;
       io.out(1) = s;
     }
