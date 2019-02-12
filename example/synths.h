@@ -6,6 +6,9 @@
 #include <cstdio>
 #include <cstdlib>
 
+#define DR_WAV_IMPLEMENTATION
+#include "dr_wav.h"
+
 namespace diy {
 
 const int SAMPLE_RATE = 44100;
@@ -151,9 +154,6 @@ struct QuasiBandlimited {
     last = osc;
     return out * norm;  // store normalized result
   }
-
-  // XXX: make this one work...
-  float tri() { return 0; }
 };
 
 struct Saw : QuasiBandlimited {
@@ -173,6 +173,8 @@ struct RectAlias : Phasor {
   float operator()() { return (Phasor::operator()() < dutyCycle) ? -1 : 1; }
 };
 
+// the partials roll off very quickly when compared to naiive Saw and Square; do
+// we really need a band-limited triangle?
 struct Tri : Phasor {
   float operator()() {
     float f = Phasor::operator()();
@@ -345,6 +347,7 @@ struct OnePole {
 
 struct Array {
   std::vector<float> data;
+
   /*
   float* data = nullptr;
   unsigned size = 0;
@@ -369,6 +372,55 @@ struct Array {
   // deep-copy copy constructor
   // Array(const Array& other);
   // also do assignment
+
+  void save(const char* fileName) const {
+    drwav_data_format format;
+    format.channels = 1;
+    format.container = drwav_container_riff;
+    format.format = DR_WAVE_FORMAT_IEEE_FLOAT;
+    format.sampleRate = 44100;
+    format.bitsPerSample = 32;
+    drwav* pWav = drwav_open_file_write(fileName, &format);
+    if (pWav == nullptr) {
+      std::cerr << "failed to write " << fileName << std::endl;
+      drwav_close(pWav);
+      return;
+    }
+    drwav_uint64 samplesWritten = drwav_write(pWav, data.size(), &data[0]);
+    if (samplesWritten != data.size()) {
+      std::cerr << "failed to write all samples to " << fileName << std::endl;
+      drwav_close(pWav);
+      return;
+    }
+    drwav_close(pWav);
+  }
+
+  bool load(const char* fileName) {
+    drwav* pWav = drwav_open_file(fileName);
+    if (pWav == nullptr) return false;
+
+    if (pWav->channels == 1) {
+      data.resize(pWav->totalPCMFrameCount);
+      drwav_read_f32(pWav, data.size(), &data[0]);  // XXX does fail?
+      drwav_close(pWav);
+      return true;
+    }
+
+    if (pWav->channels > 1) {
+      float* pSampleData = (float*)malloc((size_t)pWav->totalPCMFrameCount *
+                                          pWav->channels * sizeof(float));
+      drwav_read_f32(pWav, pWav->totalPCMFrameCount, pSampleData);
+      drwav_close(pWav);
+
+      data.resize(pWav->totalPCMFrameCount);
+      for (unsigned i = 0; i < data.size(); ++i)
+        data[i] =
+            pSampleData[pWav->channels * i];  // only read the first channel
+      return true;
+    }
+
+    return false;
+  }
 
   void resize(unsigned n) { data.resize(n, 0); }
   float& operator[](unsigned index) { return data[index]; }
@@ -409,8 +461,8 @@ struct Array {
 struct Delay : Array {
   float delay;
   unsigned next;
-  Delay(float capacity = 2) {
-    resize(ceil(capacity * SAMPLE_RATE));
+  Delay(float seconds = 2) {
+    resize(ceil(seconds * SAMPLE_RATE));
     next = 0;
   }
 
@@ -420,8 +472,9 @@ struct Delay : Array {
   float operator()(float sample) {
     float index = next - delay;
     if (index < 0) index += data.size();
-    float returnValue = get(index);
-    data[next] = data[next] * 0.5 + sample;
+    float returnValue = get(index);  // read
+    data[next] = sample;             // write
+    // data[next] = data[next] * 0.5 + sample; // example of feedback
     next++;
     if (next >= data.size()) next = 0;
     return returnValue;
@@ -521,31 +574,6 @@ struct ADSR {
     printf("  release:%f\n", release.seconds);
   }
 };
-
-/*
-// pattern for later
-struct Reverb {
-  float operator()(float f) { return makeReverbHappenTo(f); }
-}
-*/
-
-/*
-struct Sine : Phasor {
-  // how much memory does this cost?
-  float data[200000];
-  // a float is 4 bytes
-  // 200_000 * 4 = 800_000 bytes or 0.8 MB.
-
-  Sine() {
-    for (int i = 0; i < 200000; i++) data[i] = sin(2 * M_PI * i / 200000);
-  }
-
-  float operator()() {
-    float phase = Phasor::operator()();
-    return data[int(phase * 200000)];
-  }
-};
-*/
 
 struct Table : Phasor, Array {
   Table(unsigned size = 4096) { resize(size); }

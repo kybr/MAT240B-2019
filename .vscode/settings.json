@@ -20,7 +20,9 @@
     "memory": "cpp",
     "thread": "cpp",
     "tuple": "cpp",
-    "utility": "cpp"
+    "utility": "cpp",
+    "ostream": "cpp",
+    "iosfwd": "cpp"
   },
   "editor.formatOnSave": true,
   "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe"

@@ -19,7 +19,7 @@ struct WindowedSync : Edge, Array {
   Phasor resonator;
 
   virtual float operator()() {
-    const float index = resonator() * size;
+    const float index = resonator() * data.size();
     const float v = get(index) * (1 - phase);
     if (Edge::operator()()) resonator.phase = 0;
     return v;
