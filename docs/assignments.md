@@ -22,6 +22,65 @@ Read _[Karplus-Strong string synthesis]_ and _[Karplus Strong Algorithm]_ and im
 2. Implement Karplus-Strong using allolib and the offerings in our _synths.h_ header. Make sure this version supports triggering "plucks" and setting the fundamental frequency of the synth. Call this solution _string-p2.cpp_.
 3. Do your own thing. Name this code _string-p3.cpp_. Add or change some element of Karplus-Strong. For instance, use a different kind of filter, allow for dynamically changing the "listening position", or introduce some sort of dynamic range compression to generate a "guitar feedback" sound.
 
+To provide context for part 2, imagine this starter code:
+
+``` {#lst:starter_code_karplus_string}
+
+#include "Gamma/SoundFile.h"
+using namespace gam;
+
+#include "al/core.hpp"
+using namespace al;
+
+#include "synths.h"
+using namespace diy;
+
+struct KarplusStrong {
+  // frequency
+  //
+  void pluck() {
+    // what to do here?
+    //
+    // when is this?
+    // what time context is this called in?
+  }
+
+  void frequency(float hertz) {
+    // do something
+  }
+
+  void decay(float seconds) {
+    // do something
+  }
+
+  //
+  float operator()() {
+    return 0;  // this is wrong
+    //
+  }
+};
+
+struct OurApp : App {
+  Edge edge;
+  KarplusStrong string;
+  void onCreate() {
+    edge.period(1);
+    string.frequency(220);
+  }
+  void onSound(AudioIOData& io) override {
+    while (io()) {
+      if (edge()) {
+        string.pluck();
+        //
+      }
+
+      float f = string();
+      io.out(0) = f;
+      io.out(1) = f;
+    }
+  }
+};
+```
 
 [Karplus-Strong string synthesis]: https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis
 [Karplus Strong Algorithm]: https://ccrma.stanford.edu/~jos/pasp/Karplus_Strong_Algorithm.html
