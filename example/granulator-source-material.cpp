@@ -64,6 +64,8 @@ class Bag {
   }
 };
 
+vector<Array> arrayList;
+
 struct Granulator {
   // knows how to load a file into the granulator
   //
@@ -83,11 +85,17 @@ struct Granulator {
       exit(1);
     }
 
-    Array* a = new Array();
-    a->size = soundFile.frames();
-    a->data = new float[a->size];
-    soundFile.read(a->data, a->size);
-    this->soundClip.push_back(a);
+    arrayList.emplace_back();
+    Array a(arrayList.back());
+    a.resize(soundFile.frames());
+    soundFile.read(a.data(), a.size());
+    this->soundClip.push_back(&a);
+
+    // Array* a = new Array();
+    // a->size = soundFile.frames();
+    // a->data = new float[a->size];
+    // soundFile.read(a->data, a->size);
+    // this->soundClip.push_back(a);
 
     soundFile.close();
   }
@@ -148,7 +156,7 @@ struct Granulator {
     g.source = soundClip[whichClip];
 
     // startTime and endTime are in units of sample
-    float startTime = g.source->size * startPosition;
+    float startTime = g.source->size() * startPosition;
     float endTime =
         startTime + grainDuration * SAMPLE_RATE * powf(2.0, playbackRate);
 

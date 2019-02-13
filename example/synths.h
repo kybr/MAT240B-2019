@@ -6,6 +6,10 @@
 #include <cstdio>
 #include <cstdlib>
 
+// C++ STD library
+#include <iostream>
+#include <vector>
+
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"
 
@@ -345,34 +349,11 @@ struct OnePole {
   float operator()(float xn) { return yn1 = b0 * xn + a1 * yn1; }
 };
 
-struct Array {
-  std::vector<float> data;
-
-  /*
-  float* data = nullptr;
-  unsigned size = 0;
-  virtual ~Array() {
-    printf("Array deleted.\n");
-    fflush(stdout);
-    if (data) delete[] data;
+struct Array : std::vector<float> {
+  void operator()(float f) {
+    push_back(f);
+    //
   }
-  void resize(unsigned n) {
-    size = n;
-    if (data) delete[] data;  // or your have a memory leak
-    if (n == 0) {
-      data = nullptr;
-    } else {
-      data = new float[n];
-      for (unsigned i = 0; i < n; ++i) data[i] = 0.0f;
-    }
-  }
-
-  */
-
-  // deep-copy copy constructor
-  // Array(const Array& other);
-  // also do assignment
-
   void save(const char* fileName) const {
     drwav_data_format format;
     format.channels = 1;
@@ -386,8 +367,8 @@ struct Array {
       drwav_close(pWav);
       return;
     }
-    drwav_uint64 samplesWritten = drwav_write(pWav, data.size(), &data[0]);
-    if (samplesWritten != data.size()) {
+    drwav_uint64 samplesWritten = drwav_write(pWav, size(), data());
+    if (samplesWritten != size()) {
       std::cerr << "failed to write all samples to " << fileName << std::endl;
       drwav_close(pWav);
       return;
@@ -400,8 +381,8 @@ struct Array {
     if (pWav == nullptr) return false;
 
     if (pWav->channels == 1) {
-      data.resize(pWav->totalPCMFrameCount);
-      drwav_read_f32(pWav, data.size(), &data[0]);  // XXX does fail?
+      resize(pWav->totalPCMFrameCount);
+      drwav_read_f32(pWav, size(), data());  // XXX does fail?
       drwav_close(pWav);
       return true;
     }
@@ -412,49 +393,44 @@ struct Array {
       drwav_read_f32(pWav, pWav->totalPCMFrameCount, pSampleData);
       drwav_close(pWav);
 
-      data.resize(pWav->totalPCMFrameCount);
-      for (unsigned i = 0; i < data.size(); ++i)
-        data[i] =
-            pSampleData[pWav->channels * i];  // only read the first channel
+      resize(pWav->totalPCMFrameCount);
+      for (unsigned i = 0; i < size(); ++i)
+        at(i) = pSampleData[pWav->channels * i];  // only read the first channel
       return true;
     }
 
     return false;
   }
 
-  void resize(unsigned n) { data.resize(n, 0); }
-  float& operator[](unsigned index) { return data[index]; }
-  float operator[](const float index) const { return get(index); }
-
-  float phasor(float index) const { return get(data.size() * index); }
-
-  float get(float index) const {
-    // allow for sloppy indexing (e.g., negative, huge) by fixing the index to
-    // within the bounds of the array
-    if (index < 0)
-      index += data.size();  // -21221488559881683402437427200.000000
-    if (index > data.size()) index -= data.size();
-
-    // defer to our method without bounds checking
-    return raw(index);
-  }
-
+  // raw lookup
+  // except that i think "at" does bounds checking
   float raw(const float index) const {
     const unsigned i = floor(index);
-    const float x0 = data[i];
-    const float x1 =
-        data[(i == (data.size() - 1)) ? 0 : i + 1];  // looping semantics
+    const float x0 = at(i);
+    const float x1 = at((i == (size() - 1)) ? 0 : i + 1);  // looping semantics
     const float t = index - i;
     return x1 * t + x0 * (1 - t);
   }
 
+  // void resize(unsigned n) { data.resize(n, 0); }
+  // float& operator[](unsigned index) { return data[index]; }
+
+  // allow for sloppy indexing (e.g., negative, huge) by fixing the index to
+  // within the bounds of the array
+  float get(float index) const {
+    if (index < 0) index += size();
+    if (index > size()) index -= size();
+    return raw(index);  // defer to our method without bounds checking
+  }
+  float operator[](const float index) const { return get(index); }
+  float phasor(float index) const { return get(size() * index); }
+
   void add(const float index, const float value) {
     const unsigned i = floor(index);
-    const unsigned j =
-        (i == (data.size() - 1)) ? 0 : i + 1;  // looping semantics
+    const unsigned j = (i == (size() - 1)) ? 0 : i + 1;  // looping semantics
     const float t = index - i;
-    data[i] += value * (1 - t);
-    data[j] += value * t;
+    at(i) += value * (1 - t);
+    at(j) += value * t;
   }
 };
 
@@ -471,12 +447,12 @@ struct Delay : Array {
 
   float operator()(float sample) {
     float index = next - delay;
-    if (index < 0) index += data.size();
+    if (index < 0) index += size();
     float returnValue = get(index);  // read
-    data[next] = sample;             // write
+    at(next) = sample;               // write
     // data[next] = data[next] * 0.5 + sample; // example of feedback
     next++;
-    if (next >= data.size()) next = 0;
+    if (next >= size()) next = 0;
     return returnValue;
   }
 };
@@ -579,7 +555,7 @@ struct Table : Phasor, Array {
   Table(unsigned size = 4096) { resize(size); }
 
   virtual float operator()() {
-    const float index = phase * data.size();
+    const float index = phase * size();
     const float v = get(index);
     Phasor::operator()();
     return v;
@@ -591,15 +567,15 @@ struct SoundPlayer : Phasor, Array {
 
   void load(float* _data, int frameCount, float _sampleRate) {
     resize(frameCount);
-    for (int i = 0; i < frameCount; ++i) data[i] = _data[i];
+    for (int i = 0; i < frameCount; ++i) at(i) = _data[i];
     sampleRate = _sampleRate;
     rate(1);
   }
 
-  void rate(float ratio) { period((data.size() / sampleRate) / ratio); }
+  void rate(float ratio) { period((size() / sampleRate) / ratio); }
 
   virtual float operator()() {
-    const float index = phase * data.size();
+    const float index = phase * size();
     const float v = get(index);
     Phasor::operator()();
     return v;
@@ -609,18 +585,18 @@ struct SoundPlayer : Phasor, Array {
 struct Noise : Table {
   Noise(unsigned size = 20 * 44100) {
     resize(size);
-    for (unsigned i = 0; i < size; ++i) data[i] = al::rnd::uniformS();
+    for (unsigned i = 0; i < size; ++i) at(i) = al::rnd::uniformS();
   }
 };
 
 struct Normal : Table {
   Normal(unsigned size = 20 * 44100) {
     resize(size);
-    for (unsigned i = 0; i < size; ++i) data[i] = al::rnd::normal();
+    for (unsigned i = 0; i < size; ++i) at(i) = al::rnd::normal();
     float maximum = 0;
     for (unsigned i = 0; i < size; ++i)
-      if (abs(data[i]) > maximum) maximum = abs(data[i]);
-    for (unsigned i = 0; i < size; ++i) data[i] /= maximum;
+      if (abs(at(i)) > maximum) maximum = abs(at(i));
+    for (unsigned i = 0; i < size; ++i) at(i) /= maximum;
   }
 };
 
@@ -628,7 +604,7 @@ struct Sine : Table {
   Sine(unsigned size = 10000) {
     const float pi2 = M_PI * 2;
     resize(size);
-    for (unsigned i = 0; i < size; ++i) data[i] = sinf(i * pi2 / size);
+    for (unsigned i = 0; i < size; ++i) at(i) = sinf(i * pi2 / size);
   }
 };
 
@@ -636,7 +612,7 @@ struct SineArray : Array {
   SineArray(unsigned size = 10000) {
     const float pi2 = M_PI * 2;
     resize(size);
-    for (unsigned i = 0; i < size; ++i) data[i] = sinf(i * pi2 / size);
+    for (unsigned i = 0; i < size; ++i) at(i) = sinf(i * pi2 / size);
   }
   float operator()(float phase) { return phasor(phase); }
 };

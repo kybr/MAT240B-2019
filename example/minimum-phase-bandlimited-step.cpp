@@ -16,7 +16,7 @@ struct SawMinBLEP : Phasor {
     gam::SoundFile soundFile;
     if (!soundFile.openRead("../MinBLEP-down.wav")) exit(-1);
     step.resize(soundFile.frames());
-    soundFile.readAll(&step.data[0]);
+    soundFile.readAll(step.data());
   }
 
   virtual float operator()() {

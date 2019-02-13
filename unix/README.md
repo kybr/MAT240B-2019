@@ -20,4 +20,14 @@ Build a program like this:
 
 ## PATH
 
-export PATH=$PATH:`pwd`
+While it is considered naughty and insecure, it might help to add this folder to you path:
+
+    export PATH=$PATH:`pwd`
+
+## Stream types
+
+- infinite streams and `take.exe`
+- stream format:
+  + one line per sample "frame"
+  + whitespace separated floating-point numbers as strings
+  + one float per channel: left, right

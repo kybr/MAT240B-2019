@@ -10,17 +10,17 @@ using namespace diy;
 using namespace std;
 
 struct PhaseDistortion : Phasor, Array {
-  PhaseDistortion(unsigned size = 10000) {
+  PhaseDistortion(unsigned s = 10000) {
     const float pi2 = M_PI * 2;
-    resize(size);
-    for (unsigned i = 0; i < size; ++i) data[i] = sinf(i * pi2 / size);
+    resize(s);
+    for (unsigned i = 0; i < size(); ++i) at(i) = sinf(i * pi2 / size());
   }
 
   Tri tri;
   float modulationFactor = 0;
 
   virtual float operator()() {
-    const float index = (phase + tri() * modulationFactor) * size;
+    const float index = (phase + tri() * modulationFactor) * size();
     const float v =
         get(index);  // XXX raw crashes and i think it should not: investigate
     Phasor::operator()();

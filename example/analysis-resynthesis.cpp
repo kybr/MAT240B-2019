@@ -209,8 +209,8 @@ struct MyApp : App {
   }
 
   void onDraw(Graphics& g) override {
-    g.clear(0.25);
     //
+    g.clear(0.25);
   }
 
   void onSound(AudioIOData& io) override {

@@ -7,6 +7,7 @@ using namespace diy;
 #include "Gamma/DFT.h"
 #include "Gamma/SamplePlayer.h"
 #include "Gamma/SoundFile.h"
+// using namespace gam;
 
 #include <iostream>
 #include <string>
@@ -20,11 +21,12 @@ const int N = 34;
 
 struct Osc : Phasor {
   float magnitude{1};
-  float operator()() { return sine(Phasor::operator()()) * magnitude; }
+  float operator()() { return magnitude * sine(Phasor::operator()()); }
 };
 
 struct Frame {
   Osc osc[N];
+
   void print() {
     for (int i = 0; i < N; ++i)  //
       cout << osc[i].magnitude << ':' << osc[i].frequency() << ' ';
@@ -35,7 +37,7 @@ struct Frame {
 float interpolate(Frame& a, Frame& b, float t) {
   float f = 0;
   for (int i = 0; i < N; ++i)  //
-    f += t * b.osc[i]() + (1 - t) * a.osc[i]();
+    f += (1 - t) * a.osc[i]() + t * b.osc[i]();
   return f;
 }
 
@@ -124,7 +126,7 @@ struct MyApp : App {
     // exit(1);
   }
 
-  Array a;
+  Array recording;
   void onSound(AudioIOData& io) override {
     while (io()) {
       float t = index() * frame.size();
@@ -135,14 +137,14 @@ struct MyApp : App {
       float p = t - left;
       float s = interpolate(frame[left], frame[right], p) / maximum;
       s /= 4;
-      a.data.push_back(s);
+      recording(s);
       io.out(0) = s;
       io.out(1) = s;
     }
   }
 
   void onKeyDown(const Keyboard& k) override {
-    a.save("analysis.wav");
+    recording.save("analysis.wav");
     exit(1);
   }
 };
