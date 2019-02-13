@@ -13,13 +13,13 @@ struct WindowedSync : Edge, Array {
   WindowedSync(unsigned size = 10000) {
     const float pi2 = M_PI * 2;
     resize(size);
-    for (unsigned i = 0; i < size; ++i) data[i] = sinf(i * pi2 / size);
+    for (unsigned i = 0; i < size; ++i) at(i) = sinf(i * pi2 / size);
   }
 
   Phasor resonator;
 
   virtual float operator()() {
-    const float index = resonator() * data.size();
+    const float index = resonator() * size();
     const float v = get(index) * (1 - phase);
     if (Edge::operator()()) resonator.phase = 0;
     return v;
