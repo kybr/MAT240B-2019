@@ -13,6 +13,8 @@
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"
 
+#include "al/core/math/al_Random.hpp"  // rnd::uniform()
+
 namespace diy {
 
 const int SAMPLE_RATE = 44100;
