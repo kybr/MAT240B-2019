@@ -97,6 +97,17 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <header>
 <h1 class="title">2019-02-12 - Physical Modeling</h1>
 </header>
+<ul>
+<li>make an appointment with me</li>
+<li>fill out final presentation time/day poll</li>
+<li>simplest filter</li>
+<li>circular buffer
+<ul>
+<li>moving average</li>
+</ul></li>
+<li>analysis/resynthesis</li>
+<li>mass-spring (mass == 1)</li>
+</ul>
 <div class="sourceCode" id="lst:filter"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="lst:filter-1" title="1"><span class="kw">struct</span> SimpleFilter {</a>
 <a class="sourceLine" id="lst:filter-2" title="2">  <span class="dt">float</span> lastInput{<span class="dv">0</span>};</a>
 <a class="sourceLine" id="lst:filter-3" title="3">  <span class="dt">float</span> <span class="kw">operator</span>()(<span class="dt">float</span> input) {</a>
