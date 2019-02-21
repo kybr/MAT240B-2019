@@ -436,25 +436,47 @@ struct Array : std::vector<float> {
   }
 };
 
-struct Delay : Array {
-  float delay;
-  unsigned next;
-  Delay(float seconds = 2) {
-    resize(ceil(seconds * SAMPLE_RATE));
-    next = 0;
+// This is a low-level structure for saving a sequence of samples. It offers
+// separate read/write operations.
+//
+struct DelayLine : Array {
+  unsigned next{0};
+
+  DelayLine(float capacity = 0.5 /* seconds */) {
+    resize(ceil(capacity * SAMPLE_RATE));
   }
 
-  void period(float seconds) { delay = seconds * SAMPLE_RATE; }
+  void write(float f) {
+    at(next) = f;
+    next++;
+    if (next == size())  //
+      next = 0;
+  }
+  void operator()(float f) {  // alias
+    write(f);
+  }
+
+  float read(float delayTime /* seconds */) {
+    float index = next - delayTime;
+    if (index < 0)  //
+      index += size();
+    return get(index);
+  }
+};
+
+// This is a simple echo effect. On each call, you give it some input and you
+// get some output from delayTime samples ago. If you want "multi-tap" or
+// separate read/write operations, use another object.
+//
+struct Echo : DelayLine {
+  float delayTime{0};  // in samples, floating point
+
+  void period(float seconds) { delayTime = seconds * SAMPLE_RATE; }
   void frequency(float hertz) { period(1 / hertz); }
 
   float operator()(float sample) {
-    float index = next - delay;
-    if (index < 0) index += size();
-    float returnValue = get(index);  // read
-    at(next) = sample;               // write
-    // data[next] = data[next] * 0.5 + sample; // example of feedback
-    next++;
-    if (next >= size()) next = 0;
+    float returnValue = read(delayTime);
+    write(sample);
     return returnValue;
   }
 };

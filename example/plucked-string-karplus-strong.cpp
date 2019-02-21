@@ -16,40 +16,53 @@ struct Filter {
   }
 };
 
-struct PluckedString {
-  Delay delay;
+Noise noise;  // don't put this in pluck; it loads and unloads memory!
+
+struct PluckedString : DelayLine {
+  // Biquad filter;
   Filter filter;
 
-  void frequency(float hertz) {
-    //
-    delay.frequency(hertz);
-  }
-
   float gain{1};
-  void decay(float seconds) {
-    // depends on frequency!
-    gain = 0.8;
+
+  float delayTime;  // in samples
+
+  float frequency(float hertz) {
+    // filter.lpf(hertz * 7, 0.67);
+    period(1 / hertz);
+  }
+  float period(float seconds) {
+    delayTime = seconds * SAMPLE_RATE;
+    recalculate();
   }
 
-  float v{0};
+  float t60{1};
+  void decayTime(float _t60) {
+    t60 = _t60;
+    recalculate();
+  }
+  void recalculate() {
+    int n = t60 / (delayTime / SAMPLE_RATE);
+    gain = pow(dbtoa(-60 / t60), 1.0f / n);
+    printf("n:%d g:%f\n", n, gain);
+  }
+
   float operator()() {
-    v = filter(delay(v)) * gain;
-    return v;
+    float delayed = filter(read(delayTime)) * gain;
+    write(delayed);
+    return delayed;
   }
 
   void pluck() {
-    Noise noise;
-    for (int i = 0; i < 2000; ++i) {
-      delay(noise());
+    // put noise in the last N sample memory positions. N depends on frequency
+    //
+    int n = int(ceil(delayTime));
+    for (int i = 0; i < n; ++i) {
+      int index = next - i;
+      if (index < 0)  //
+        index += size();
+      // at(index) = 2.0f * i / n - 1.0f;  // sawtooth!
+      at(index) = noise();
     }
-
-    /*
-        Saw saw;
-        saw.frequency(55);
-        for (int i = 0; i < 2000; ++i) {
-          delay(saw());
-        }
-        */
   }
 };
 
@@ -59,26 +72,23 @@ struct MyApp : App {
 
   void onCreate() override {
     edge.period(0.9);
-    string.gain = 0.8;
-    string.pluck();
+    string.decayTime(5);
     string.frequency(mtof(rnd::uniform(21, 60)));
+    string.pluck();
     //
   }
 
   Array recording;
-  bool shouldClear = false;
   void onSound(AudioIOData& io) override {
     while (io()) {
       if (edge()) {
-        string.pluck();
         string.frequency(mtof(rnd::uniform(21, 60)));
-        //
+        float d = rnd::uniform(0.5, 7.0);
+        string.decayTime(d);
+        string.pluck();
+        edge.period(d);
       }
       float f = string();
-      if (shouldClear) {
-        shouldClear = false;
-        recording.clear();
-      }
       recording(f);
       io.out(0) = f;
       io.out(1) = f;
@@ -87,7 +97,6 @@ struct MyApp : App {
 
   void onKeyDown(const Keyboard& k) override {
     recording.save("karplus-strong-recording.wav");
-    shouldClear = true;
     //
   }
 };
