@@ -16,52 +16,60 @@ struct Filter {
   }
 };
 
-Noise noise;  // don't put this in pluck; it loads and unloads memory!
-
 struct PluckedString : DelayLine {
-  // Biquad filter;
   Filter filter;
 
   float gain{1};
+  float t60{1};
+  float delayTime{1};  // in seconds
 
-  float delayTime;  // in samples
-
-  float frequency(float hertz) {
-    // filter.lpf(hertz * 7, 0.67);
-    period(1 / hertz);
-  }
-  float period(float seconds) {
-    delayTime = seconds * SAMPLE_RATE;
+  void frequency(float hertz) { period(1 / hertz); }
+  void period(float seconds) {
+    delayTime = seconds;
     recalculate();
   }
 
-  float t60{1};
   void decayTime(float _t60) {
     t60 = _t60;
     recalculate();
   }
+
+  void set(float frequency, float decayTime) {
+    delayTime = 1 / frequency;
+    t60 = decayTime;
+    recalculate();
+  }
+
+  // given t60 and frequency (seconds and Hertz), calculate the gain...
+  //
+  // for a given frequency, our algorithm applies *gain* frequency-many times
+  // per second. given a t60 time we can calculate how many times (n) gain will
+  // be applied in those t60 seconds. we want to reduce the signal by 60dB over
+  // t60 seconds or over n-many applications. this means that we want gain to be
+  // a number that, when multiplied by itself n times, becomes 60 dB quieter.
+  //
   void recalculate() {
-    int n = t60 / (delayTime / SAMPLE_RATE);
-    gain = pow(dbtoa(-60 / t60), 1.0f / n);
-    printf("n:%d g:%f\n", n, gain);
+    int n = t60 / delayTime;
+    gain = pow(dbtoa(-60), 1.0f / n);
+    printf("t:%f\tf:%f\tn:%d\tg:%f\n", t60, 1 / delayTime, n, gain);
+    fflush(stdout);
   }
 
   float operator()() {
-    float delayed = filter(read(delayTime)) * gain;
-    write(delayed);
-    return delayed;
+    float v = filter(read(delayTime)) * gain;
+    write(v);
+    return v;
   }
 
   void pluck() {
     // put noise in the last N sample memory positions. N depends on frequency
     //
-    int n = int(ceil(delayTime));
+    int n = int(ceil(delayTime * SAMPLE_RATE));
     for (int i = 0; i < n; ++i) {
       int index = next - i;
       if (index < 0)  //
         index += size();
-      // at(index) = 2.0f * i / n - 1.0f;  // sawtooth!
-      at(index) = noise();
+      at(index) = noise(float(i) / n);
     }
   }
 };
@@ -71,20 +79,20 @@ struct MyApp : App {
   PluckedString string;
 
   void onCreate() override {
-    edge.period(0.9);
-    string.decayTime(5);
-    string.frequency(mtof(rnd::uniform(21, 60)));
+    float d = rnd::uniform(0.5, 7.0);
+    float f = mtof(rnd::uniform(21, 60));
+    string.set(f, d);
     string.pluck();
-    //
+    edge.period(d);
   }
 
   Array recording;
   void onSound(AudioIOData& io) override {
     while (io()) {
       if (edge()) {
-        string.frequency(mtof(rnd::uniform(21, 60)));
         float d = rnd::uniform(0.5, 7.0);
-        string.decayTime(d);
+        float f = mtof(rnd::uniform(21, 60));
+        string.set(f, d);
         string.pluck();
         edge.period(d);
       }

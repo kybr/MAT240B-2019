@@ -183,8 +183,9 @@ struct RectAlias : Phasor {
 // we really need a band-limited triangle?
 struct Tri : Phasor {
   float operator()() {
-    float f = Phasor::operator()();
-    return ((f < 0.5) ? f : 1 - f) * 4 - 1;
+    float f = 2 * Phasor::operator()() - 1;
+    f = (f < -0.5) ? -1 - f : (f > 0.5 ? 1 - f : f);
+    return 2 * f;
   }
 };
 
@@ -456,8 +457,10 @@ struct DelayLine : Array {
     write(f);
   }
 
+  // z-operator is in samples
+  //
   float read(float delayTime /* seconds */) {
-    float index = next - delayTime;
+    float index = next - delayTime * SAMPLE_RATE;
     if (index < 0)  //
       index += size();
     return get(index);
@@ -475,7 +478,7 @@ struct Echo : DelayLine {
   void frequency(float hertz) { period(1 / hertz); }
 
   float operator()(float sample) {
-    float returnValue = read(delayTime);
+    float returnValue = read(delayTime / SAMPLE_RATE);
     write(sample);
     return returnValue;
   }
@@ -606,6 +609,8 @@ struct SoundPlayer : Phasor, Array {
   }
 };
 
+/*
+
 struct Noise : Table {
   Noise(unsigned size = 20 * 44100) {
     resize(size);
@@ -631,18 +636,63 @@ struct Sine : Table {
     for (unsigned i = 0; i < size; ++i) at(i) = sinf(i * pi2 / size);
   }
 };
-
-struct SineArray : Array {
-  SineArray(unsigned size = 10000) {
-    const float pi2 = M_PI * 2;
-    resize(size);
-    for (unsigned i = 0; i < size; ++i) at(i) = sinf(i * pi2 / size);
-  }
-  float operator()(float phase) { return phasor(phase); }
-};
+*/
 
 float sine(float phase) {
+  struct SineArray : Array {
+    SineArray() {
+      resize(10000);
+      const float pi2 = M_PI * 2;
+      for (unsigned i = 0; i < size(); ++i)  //
+        at(i) = sinf(i * pi2 / size());
+    }
+    float operator()(float phase) {
+      //
+      return phasor(phase);
+    }
+  };
+
   static SineArray instance;
+  return instance(phase);
+}
+
+float noise(float phase) {
+  struct NoiseArray : Array {
+    NoiseArray() {
+      resize(20 * 44100);
+      for (unsigned i = 0; i < size(); ++i)  //
+        at(i) = al::rnd::uniformS();
+    }
+    float operator()(float phase) {
+      //
+      return phasor(phase);
+    }
+  };
+
+  static NoiseArray instance;
+  return instance(phase);
+}
+
+float normal(float phase) {
+  struct NormalDistribution : Array {
+    NormalDistribution() {
+      resize(20 * 44100);
+      for (unsigned i = 0; i < size(); ++i)  //
+        at(i) = al::rnd::normal();
+      float maximum = 0;
+      for (unsigned i = 0; i < size(); ++i)
+        if (abs(at(i)) > maximum)  //
+          maximum = abs(at(i));
+      for (unsigned i = 0; i < size(); ++i)  //
+        at(i) /= maximum;
+    }
+    float operator()(float phase) {
+      //
+      return phasor(phase);
+    }
+  };
+  //
+  static NormalDistribution instance;
   return instance(phase);
 }
 
