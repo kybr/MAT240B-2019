@@ -46,7 +46,8 @@ struct PluckedString : DelayLine {
   // per second. given a t60 time we can calculate how many times (n) gain will
   // be applied in those t60 seconds. we want to reduce the signal by 60dB over
   // t60 seconds or over n-many applications. this means that we want gain to be
-  // a number that, when multiplied by itself n times, becomes 60 dB quieter.
+  // a number that, when multiplied by itself n times, becomes 60 dB quieter
+  // than it began.
   //
   void recalculate() {
     int n = t60 / delayTime;

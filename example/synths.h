@@ -22,9 +22,11 @@ const int BLOCK_SIZE = 512;
 const int OUTPUT_CHANNELS = 2;
 const int INPUT_CHANNELS = 2;
 
-float scale(float value, float low, float high, float Low, float High) {
+float map(float value, float low, float high, float Low, float High) {
   return Low + (High - Low) * ((value - low) / (high - low));
 }
+float norm(float v, float low, float high) { return map(v, low, high, 0, 1); }
+float lerp(float a, float b, float t) { return (1 - t) * a + t * b; }
 float mtof(float m) { return 8.175799f * powf(2.0f, m / 12.0f); }
 float ftom(float f) { return 12.0f * log2f(f / 8.175799f); }
 float dbtoa(float db) { return 1.0f * powf(10.0f, db / 20.0f); }
