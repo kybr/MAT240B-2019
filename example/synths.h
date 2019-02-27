@@ -404,6 +404,9 @@ struct DelayModulation {
   }
 
   float operator()(float f) {
+    // XXX should i do the write before the read?
+    // this 0.001 fudge factor should use SCIENCE
+    //
     float d = 0.001 + (1 + sine()) * amplitude;
     float v = delayLine.read(d);
     delayLine.write(f);

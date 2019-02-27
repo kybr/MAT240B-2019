@@ -15,22 +15,28 @@ struct Event {
   double when;
   float frequency;
   float decayTime;
-  // possible synthesis parameters that may depend on the "clock"
-  // envelope parameters
-  // duration
+
+  // XXX there's a LOT of stuff we could put in here. every synth we've seen
+  // has a different interface. most support the notion of frequency. many
+  // synthesis parameters such as envelope parameters or duration may depend on
+  // the "clock".
   //
 
-  // Event a, b;
-  // if (a < b ) {...}
+  // priority_queue needs a way to compare Event objects so it can put them in
+  // the right order. defining the method below is one way to accomplish this.
+  //
   int operator<(const Event& other) const {
     // > or < determines ordering!
     return when > other.when;
   }
+  // this means we can compare Event objects like this:
+  // Event a, b;
+  // if (a < b) {...}
 };
 
-const int N = 7;
-
 struct StringBank {
+  static const int N = 7;
+
   int index = 0;
   PluckedString pluckedString[N];
 
@@ -48,10 +54,21 @@ struct StringBank {
   }
 };
 
+// our Thing only loops a list of midi note numbers. we can imagine something
+// more interesting:
+// - maintain a local notion of time
+// - extract note durations
+// - extract note levels
+// - don't loop; call a function when done
+//
 struct Thing {
   vector<int> data;
   int index = 0;
 
+  // with this function we extract information from a string to construct a
+  // generator thing that outputs patterns. later this might use more
+  // sophisticated tools such as regular expressions.
+  //
   void load(string pattern) {
     stringstream s(pattern);
     data.clear();
@@ -88,6 +105,9 @@ struct MyApp : App {
     //
   }
 
+  // this is like diy::Edge but this one has a different notion of time. it uses
+  // real (wall) time rather than sample time.
+  //
   struct EdgeLike {
     float period = 1;
     float timer = 0;
@@ -108,9 +128,10 @@ struct MyApp : App {
 
   double t = 0;
   void onAnimate(double dt) override {
-    // access the GUI...
-    // read from a text box
-    // interpret each line as a pattern
+    // TODO:
+    // we'd like to access the GUI, reading from a text box, interpreting each
+    // line as a pattern. we'd like a live text-based sequencer.
+    //
 
     if (edgeLike(dt)) {
       float f = mtof(thing());
@@ -125,19 +146,10 @@ struct MyApp : App {
     static double now = 0;
 
     while (io()) {
-      // inspect the queue of events
-      // if is is empty...
-      // for each event that is even a little bit in the past..
-      // deque the event and dispatch an instrument
-      //
-      // do nothing
       while (!eventList.empty()) {
         const Event& e = eventList.top();
         if (e.when < now) {
-          //
-          // use properties of the event; this specific to the instrument
-          stringBank.trigger(e.frequency / 2, e.decayTime);
-
+          stringBank.trigger(e.frequency, e.decayTime);
           eventList.pop();
         } else
           break;
