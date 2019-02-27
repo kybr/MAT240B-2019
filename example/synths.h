@@ -17,10 +17,18 @@
 
 namespace diy {
 
+// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+// xx GLOBALS
+// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
 const int SAMPLE_RATE = 44100;
 const int BLOCK_SIZE = 512;
 const int OUTPUT_CHANNELS = 2;
 const int INPUT_CHANNELS = 2;
+
+// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+// xx HELPER FUNCTIONS
+// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 float map(float value, float low, float high, float Low, float High) {
   return Low + (High - Low) * ((value - low) / (high - low));
@@ -34,26 +42,47 @@ float atodb(float a) { return 20.0f * log10f(a / 1.0f); }
 float sigmoid(float x) { return 1 / (1 + expf(-x)); }
 float sigmoid_bipolar(float x) { return 2 * sigmoid(x) - 1; }
 
-struct Phasor {
-  float phase = 0.0;        // on the interval [0, 1)
-  float increment = 0.001;  // led to an low F
+float saw(float phase) { return phase * 2 - 1; }
+float rect(float phase) { return phase < 0.5 ? -1 : 1; }
+float tri(float phase) {
+  float f = 2 * phase - 1;
+  f = (f < -0.5) ? -1 - f : (f > 0.5 ? 1 - f : f);
+  return 2 * f;
+}
 
-  void period(float seconds) { frequency(1 / seconds); }
+// TODO: make tic/toc for a more familiar/direct measurement
+//
+struct BlockTimer {
+  std::chrono::high_resolution_clock::time_point begin;
+  BlockTimer() : begin(std::chrono::high_resolution_clock::now()) {}
+  ~BlockTimer() {
+    double t = std::chrono::duration<double>(
+                   std::chrono::high_resolution_clock::now() - begin)
+                   .count();
+    if (t > 0) std::cout << "...took " << t << " seconds." << std::endl;
+  }
+};
+
+// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+// xx SYNTHS!
+// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+// this will get used all over the place
+//
+struct Phasor {
+  float phase{0};      // on the interval [0, 1)
+  float increment{0};  // led to an low F
+
   void frequency(float hertz) {
     // this function may run per-sample. all this stuff costs performance
-
-    // XXX check for INSANE frequencies
-    if (hertz > SAMPLE_RATE) {
-      printf("hertz > SAMPLE_RATE\n");
-      exit(1);
-    }
-    if (hertz < -SAMPLE_RATE) {
-      printf("hertz < -SAMPLE_RATE\n");
-      exit(1);
-    }
+    // assert(hertz < SAMPLE_RATE && hertz > -SAMPLE_RATE);
     increment = hertz / SAMPLE_RATE;
   }
-  float frequency() { return SAMPLE_RATE * increment; }
+  void period(float seconds) { frequency(1 / seconds); }
+  float frequency() const { return SAMPLE_RATE * increment; }
+
+  // add some Hertz to the current frequency
+  //
   void modulate(float hertz) { increment += hertz / SAMPLE_RATE; }
 
   float operator()() {
@@ -68,129 +97,14 @@ struct Phasor {
   }
 };
 
-struct QuasiBandlimited {
-  //
-  // from "Synthesis of Quasi-Bandlimited Analog Waveforms Using Frequency
-  // Modulation" by Peter Schoffhauzer
-  // (http://scp.web.elte.hu/papers/synthesis1.pdf)
-  //
-  const float a0 = 2.5;   // precalculated coeffs
-  const float a1 = -1.5;  // for HF compensation
-
-  // variables
-  float osc;      // output of the saw oscillator
-  float osc2;     // output of the saw oscillator 2
-  float phase;    // phase accumulator
-  float w;        // normalized frequency
-  float scaling;  // scaling amount
-  float DC;       // DC compensation
-  float norm;     // normalization amount
-  float last;     // delay for the HF filter
-
-  float Frequency, Filter, PulseWidth;
-
-  QuasiBandlimited() {
-    reset();
-    Frequency = 1.0;
-    Filter = 0.85;
-    PulseWidth = 0.5;
-    recalculate();
-  }
-
-  void reset() {
-    // zero oscillator and phase
-    osc = 0.0;
-    osc2 = 0.0;
-    phase = 0.0;
-  }
-
-  void recalculate() {
-    w = Frequency / SAMPLE_RATE;  // normalized frequency
-    float n = 0.5 - w;
-    scaling = Filter * 13.0f * powf(n, 4.0f);  // calculate scaling
-    DC = 0.376 - w * 0.752;                    // calculate DC compensation
-    norm = 1.0 - 2.0 * w;                      // calculate normalization
-  }
-
-  void frequency(float f) {
-    Frequency = f;
-    recalculate();
-  }
-
-  void filter(float f) {
-    Filter = f;
-    recalculate();
-  }
-
-  void pulseWidth(float w) {
-    PulseWidth = w;
-    recalculate();
-  }
-
-  void step() {
-    // increment accumulator
-    phase += 2.0 * w;
-    if (phase >= 1.0) phase -= 2.0;
-    if (phase <= -1.0) phase += 2.0;
-  }
-
-  // process loop for creating a bandlimited saw wave
-  float saw() {
-    step();
-
-    // calculate next sample
-    osc = (osc + sinf(2 * M_PI * (phase + osc * scaling))) * 0.5;
-    // compensate HF rolloff
-    float out = a0 * osc + a1 * last;
-    last = osc;
-    out = out + DC;     // compensate DC offset
-    return out * norm;  // store normalized result
-  }
-
-  // process loop for creating a bandlimited PWM pulse
-  float pulse() {
-    step();
-
-    // calculate saw1
-    osc = (osc + sinf(2 * M_PI * (phase + osc * scaling))) * 0.5;
-    // calculate saw2
-    osc2 =
-        (osc2 + sinf(2 * M_PI * (phase + osc2 * scaling + PulseWidth))) * 0.5;
-    float out = osc - osc2;  // subtract two saw waves
-    // compensate HF rolloff
-    out = a0 * out + a1 * last;
-    last = osc;
-    return out * norm;  // store normalized result
-  }
-};
-
-struct Saw : QuasiBandlimited {
-  float operator()() { return saw(); }
-};
-
-struct SawAlias : Phasor {
-  float operator()() { return Phasor::operator()() * 2 - 1; }
-};
-
-struct Rect : QuasiBandlimited {
-  float operator()() { return pulse(); }
-};
-
-struct RectAlias : Phasor {
-  float dutyCycle = 0.5;
-  float operator()() { return (Phasor::operator()() < dutyCycle) ? -1 : 1; }
-};
-
 // the partials roll off very quickly when compared to naiive Saw and Square; do
-// we really need a band-limited triangle?
+// we really need a band-limited triangle? Meh.
 struct Tri : Phasor {
-  float operator()() {
-    float f = 2 * Phasor::operator()() - 1;
-    f = (f < -0.5) ? -1 - f : (f > 0.5 ? 1 - f : f);
-    return 2 * f;
-  }
+  float operator()() { return tri(Phasor::operator()()); }
 };
 
+// a DC-blocking (high-pass) filter
+//
 struct DCblock {
   float x1 = 0, y1 = 0;
   float operator()(float in1) {
@@ -200,18 +114,6 @@ struct DCblock {
     return y;
   }
 };
-
-/*
- * this one is not ready
-struct Tri : QuasiBandlimited {
-  DCblock block, block2;
-  float value = 0;
-  float operator()() {
-    value += block(pulse());
-    return block2(value);
-  }
-};
-*/
 
 struct History {
   float _value = 0;
@@ -439,6 +341,28 @@ struct Array : std::vector<float> {
   }
 };
 
+float sine(float phase) {
+  struct SineArray : Array {
+    SineArray() {
+      resize(10000);
+      const float pi2 = M_PI * 2;
+      for (unsigned i = 0; i < size(); ++i)  //
+        at(i) = sinf(i * pi2 / size());
+    }
+    float operator()(float phase) {
+      //
+      return phasor(phase);
+    }
+  };
+
+  static SineArray instance;
+  return instance(phase);
+}
+
+struct Sine : Phasor {
+  float operator()() { return sine(Phasor::operator()()); }
+};
+
 // This is a low-level structure for saving a sequence of samples. It offers
 // separate read/write operations.
 //
@@ -466,6 +390,24 @@ struct DelayLine : Array {
     if (index < 0)  //
       index += size();
     return get(index);
+  }
+};
+
+struct DelayModulation {
+  Sine sine;
+  DelayLine delayLine;
+  float amplitude;
+
+  void set(float rate, float depth) {
+    sine.frequency(rate);
+    amplitude = depth;
+  }
+
+  float operator()(float f) {
+    float d = 0.001 + (1 + sine()) * amplitude;
+    float v = delayLine.read(d);
+    delayLine.write(f);
+    return v;
   }
 };
 
@@ -611,53 +553,6 @@ struct SoundPlayer : Phasor, Array {
   }
 };
 
-/*
-
-struct Noise : Table {
-  Noise(unsigned size = 20 * 44100) {
-    resize(size);
-    for (unsigned i = 0; i < size; ++i) at(i) = al::rnd::uniformS();
-  }
-};
-
-struct Normal : Table {
-  Normal(unsigned size = 20 * 44100) {
-    resize(size);
-    for (unsigned i = 0; i < size; ++i) at(i) = al::rnd::normal();
-    float maximum = 0;
-    for (unsigned i = 0; i < size; ++i)
-      if (abs(at(i)) > maximum) maximum = abs(at(i));
-    for (unsigned i = 0; i < size; ++i) at(i) /= maximum;
-  }
-};
-
-struct Sine : Table {
-  Sine(unsigned size = 10000) {
-    const float pi2 = M_PI * 2;
-    resize(size);
-    for (unsigned i = 0; i < size; ++i) at(i) = sinf(i * pi2 / size);
-  }
-};
-*/
-
-float sine(float phase) {
-  struct SineArray : Array {
-    SineArray() {
-      resize(10000);
-      const float pi2 = M_PI * 2;
-      for (unsigned i = 0; i < size(); ++i)  //
-        at(i) = sinf(i * pi2 / size());
-    }
-    float operator()(float phase) {
-      //
-      return phasor(phase);
-    }
-  };
-
-  static SineArray instance;
-  return instance(phase);
-}
-
 float noise(float phase) {
   struct NoiseArray : Array {
     NoiseArray() {
@@ -698,19 +593,176 @@ float normal(float phase) {
   return instance(phase);
 }
 
-//
-// RAII
-struct BlockTimer {
-  std::chrono::high_resolution_clock::time_point begin;
-
-  BlockTimer() : begin(std::chrono::high_resolution_clock::now()) {}
-
-  ~BlockTimer() {
-    double t = std::chrono::duration<double>(
-                   std::chrono::high_resolution_clock::now() - begin)
-                   .count();
-    if (t > 0) std::cout << "...took " << t << " seconds." << std::endl;
+struct MeanFilter {
+  float x1{0};
+  float operator()(float x0) {
+    float v = (x0 + x1) / 2;
+    x1 = x0;
+    return v;
   }
+};
+
+struct PluckedString : DelayLine {
+  MeanFilter filter;
+
+  float gain{1};
+  float t60{1};
+  float delayTime{1};  // in seconds
+
+  void frequency(float hertz) { period(1 / hertz); }
+  void period(float seconds) {
+    delayTime = seconds;
+    recalculate();
+  }
+
+  void decayTime(float _t60) {
+    t60 = _t60;
+    recalculate();
+  }
+
+  void set(float frequency, float decayTime) {
+    delayTime = 1 / frequency;
+    t60 = decayTime;
+    recalculate();
+  }
+
+  // given t60 and frequency (seconds and Hertz), calculate the gain...
+  //
+  // for a given frequency, our algorithm applies *gain* frequency-many times
+  // per second. given a t60 time we can calculate how many times (n) gain will
+  // be applied in those t60 seconds. we want to reduce the signal by 60dB over
+  // t60 seconds or over n-many applications. this means that we want gain to be
+  // a number that, when multiplied by itself n times, becomes 60 dB quieter
+  // than it began.
+  //
+  void recalculate() {
+    int n = t60 / delayTime;
+    gain = pow(dbtoa(-60), 1.0f / n);
+    // printf("t:%f\tf:%f\tn:%d\tg:%f\n", t60, 1 / delayTime, n, gain);
+    // fflush(stdout);
+  }
+
+  float operator()() {
+    float v = filter(read(delayTime)) * gain;
+    write(v);
+    return v;
+  }
+
+  void pluck() {
+    // put noise in the last N sample memory positions. N depends on frequency
+    //
+    int n = int(ceil(delayTime * SAMPLE_RATE));
+    for (int i = 0; i < n; ++i) {
+      int index = next - i;
+      if (index < 0)  //
+        index += size();
+      at(index) = noise(float(i) / n);
+    }
+  }
+};
+
+struct QuasiBandlimited {
+  //
+  // from "Synthesis of Quasi-Bandlimited Analog Waveforms Using Frequency
+  // Modulation" by Peter Schoffhauzer
+  // (http://scp.web.elte.hu/papers/synthesis1.pdf)
+  //
+  const float a0 = 2.5;   // precalculated coeffs
+  const float a1 = -1.5;  // for HF compensation
+
+  // variables
+  float osc;      // output of the saw oscillator
+  float osc2;     // output of the saw oscillator 2
+  float phase;    // phase accumulator
+  float w;        // normalized frequency
+  float scaling;  // scaling amount
+  float DC;       // DC compensation
+  float norm;     // normalization amount
+  float last;     // delay for the HF filter
+
+  float Frequency, Filter, PulseWidth;
+
+  QuasiBandlimited() {
+    reset();
+    Frequency = 1.0;
+    Filter = 0.85;
+    PulseWidth = 0.5;
+    recalculate();
+  }
+
+  void reset() {
+    // zero oscillator and phase
+    osc = 0.0;
+    osc2 = 0.0;
+    phase = 0.0;
+  }
+
+  void recalculate() {
+    w = Frequency / SAMPLE_RATE;  // normalized frequency
+    float n = 0.5 - w;
+    scaling = Filter * 13.0f * powf(n, 4.0f);  // calculate scaling
+    DC = 0.376 - w * 0.752;                    // calculate DC compensation
+    norm = 1.0 - 2.0 * w;                      // calculate normalization
+  }
+
+  void frequency(float f) {
+    Frequency = f;
+    recalculate();
+  }
+
+  void filter(float f) {
+    Filter = f;
+    recalculate();
+  }
+
+  void pulseWidth(float w) {
+    PulseWidth = w;
+    recalculate();
+  }
+
+  void step() {
+    // increment accumulator
+    phase += 2.0 * w;
+    if (phase >= 1.0) phase -= 2.0;
+    if (phase <= -1.0) phase += 2.0;
+  }
+
+  // process loop for creating a bandlimited saw wave
+  float saw() {
+    step();
+
+    // calculate next sample
+    osc = (osc + sinf(2 * M_PI * (phase + osc * scaling))) * 0.5;
+    // compensate HF rolloff
+    float out = a0 * osc + a1 * last;
+    last = osc;
+    out = out + DC;     // compensate DC offset
+    return out * norm;  // store normalized result
+  }
+
+  // process loop for creating a bandlimited PWM pulse
+  float pulse() {
+    step();
+
+    // calculate saw1
+    osc = (osc + sinf(2 * M_PI * (phase + osc * scaling))) * 0.5;
+    // calculate saw2
+    osc2 =
+        (osc2 + sinf(2 * M_PI * (phase + osc2 * scaling + PulseWidth))) * 0.5;
+    float out = osc - osc2;  // subtract two saw waves
+    // compensate HF rolloff
+    out = a0 * out + a1 * last;
+    last = osc;
+    return out * norm;  // store normalized result
+  }
+};
+
+struct Saw : QuasiBandlimited {
+  float operator()() { return saw(); }
+};
+
+struct Rect : QuasiBandlimited {
+  float operator()() { return pulse(); }
 };
 
 }  // namespace diy

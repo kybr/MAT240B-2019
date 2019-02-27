@@ -82,7 +82,6 @@ struct MyApp : App {
   }
 
   Array recording;
-
   void onSound(AudioIOData& io) override {
     while (io()) {
       if (edge()) {
