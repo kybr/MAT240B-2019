@@ -369,8 +369,8 @@ struct Sine : Phasor {
 struct DelayLine : Array {
   unsigned next{0};
 
-  DelayLine(float capacity = 0.5 /* seconds */) {
-    resize(ceil(capacity * SAMPLE_RATE));
+  DelayLine(float capacity = 1 /* seconds */) {
+    resize(ceil(capacity * SAMPLE_RATE), 0);
   }
 
   void write(float f) {
@@ -651,7 +651,7 @@ struct PluckedString : DelayLine {
     return v;
   }
 
-  void pluck() {
+  void pluck(float gain = 1) {
     // put noise in the last N sample memory positions. N depends on frequency
     //
     int n = int(ceil(delayTime * SAMPLE_RATE));
@@ -659,7 +659,7 @@ struct PluckedString : DelayLine {
       int index = next - i;
       if (index < 0)  //
         index += size();
-      at(index) = noise(float(i) / n);
+      at(index) = gain * noise(float(i) / n);
     }
   }
 };
