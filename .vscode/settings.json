@@ -22,7 +22,12 @@
     "tuple": "cpp",
     "utility": "cpp",
     "ostream": "cpp",
-    "iosfwd": "cpp"
+    "iosfwd": "cpp",
+    "__locale": "cpp",
+    "__string": "cpp",
+    "regex": "cpp",
+    "string": "cpp",
+    "string_view": "cpp"
   },
   "editor.formatOnSave": true,
   "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe"

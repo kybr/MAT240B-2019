@@ -19,8 +19,11 @@ struct System {
     // "baked into" the constants. string force and damping force are
     // accumulated into velocity. mass is 1, so it disappears.
     //
-    velocity += -springConstant * position;  // resting length is 0
-    velocity += -dampingCoefficient * velocity;
+    float acceleration = 0;
+    acceleration += -springConstant * position;  // resting length is 0
+    acceleration += -dampingCoefficient * velocity;
+
+    velocity += acceleration;
     position += velocity;
     return position;
   }

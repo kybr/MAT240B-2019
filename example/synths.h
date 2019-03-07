@@ -1,14 +1,12 @@
 #ifndef __240C_SYNTHS__
 #define __240C_SYNTHS__
 
-#include <chrono>
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-
 // C++ STD library
+#include <chrono>
 #include <iostream>
 #include <vector>
+// no; let the std:: stand out
+// using namespace std;
 
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"
@@ -341,6 +339,73 @@ struct Array : std::vector<float> {
   }
 };
 
+struct FloatPair {
+  float left, right;
+  float& operator[](int i) {
+    if (i == 0)
+      return left;
+    else
+      return right;
+  }
+};
+
+struct StereoArray : std::vector<FloatPair> {
+  void save(const char* fileName) const {
+    drwav_data_format format;
+    format.channels = 2;
+    format.container = drwav_container_riff;
+    format.format = DR_WAVE_FORMAT_IEEE_FLOAT;
+    format.sampleRate = 44100;
+    format.bitsPerSample = 32;
+    drwav* pWav = drwav_open_file_write(fileName, &format);
+    if (pWav == nullptr) {
+      std::cerr << "failed to write " << fileName << std::endl;
+      drwav_close(pWav);
+      return;
+    }
+    drwav_uint64 samplesWritten = drwav_write(pWav, size(), data());
+    if (samplesWritten != size()) {
+      std::cerr << "failed to write all samples to " << fileName << std::endl;
+      drwav_close(pWav);
+      return;
+    }
+    drwav_close(pWav);
+  }
+
+  bool load(const char* fileName) {
+    drwav* pWav = drwav_open_file(fileName);
+    if (pWav == nullptr) return false;
+
+    if (pWav->channels == 1) {
+      printf("ERROR: Use Array; %s is mono\n", fileName);
+    }
+
+    // XXX
+    // check the format. make sure it is float
+
+    if (pWav->channels == 2) {
+      float* pSampleData = (float*)malloc((size_t)pWav->totalPCMFrameCount *
+                                          pWav->channels * sizeof(float));
+      drwav_read_f32(pWav, pWav->totalPCMFrameCount, pSampleData);
+      drwav_close(pWav);
+
+      resize(pWav->totalPCMFrameCount);
+      for (unsigned i = 0; i < size(); ++i) {
+        at(i).left = pSampleData[pWav->channels * i];
+        at(i).right = pSampleData[pWav->channels * i + 1];
+      }
+      return true;
+    }
+
+    return false;
+  }
+
+  void operator()(float l, float r) {
+    push_back({l, r});
+    //
+  }
+};
+
 float sine(float phase) {
   struct SineArray : Array {
     SineArray() {
@@ -427,6 +492,93 @@ struct Echo : DelayLine {
   float operator()(float sample) {
     float returnValue = read(delayTime / SAMPLE_RATE);
     write(sample);
+    return returnValue;
+  }
+};
+
+// How is this different than a one-pole filter?
+//
+struct EnvelopeFilter {
+  float tau{1};
+  float value{0};
+  void set(float t) {
+    // where did we get this from? (see Pirkle 2013 p429)
+    // why does it work?
+    // what's up with log(0.01)
+    tau = pow(2.718281828459045, log(0.01) / (SAMPLE_RATE * t));
+  }
+  float operator()(float f) { return value = f + (value - f) * tau; }
+};
+
+struct EnvelopeFilterAsymmetric {
+  float attack{1};
+  float release{1};
+  float value{0};
+  void set(float a, float r) {
+    attack = pow(2.718281828459045, log(0.01) / (SAMPLE_RATE * a));
+    release = pow(2.718281828459045, log(0.01) / (SAMPLE_RATE * a));
+  }
+  float operator()(float f) {
+    return value = f + (value - f) * ((f > value) ? attack : release);
+  }
+};
+
+struct ShortTermRootMeanSquared {
+  float squaredSum{0};
+  float alpha{0.5f};
+
+  void set(float a) { alpha = a; }
+
+  float operator()(float f) {
+    // https://en.wikipedia.org/wiki/Moving_average#Exponential%20moving%20average
+    squaredSum = alpha * (f * f) + (1 - alpha) * squaredSum;
+    return sqrt(squaredSum);
+  }
+};
+
+struct ShortTermPeakExpensive {
+  std::vector<float> data;
+  unsigned index{0};
+
+  void set(float seconds) {
+    data.clear();
+    data.resize(int(seconds * SAMPLE_RATE) + 1);
+  }
+
+  float operator()(float f) {
+    data[index] = abs(f);
+    index++;
+    if (index == data.size())  //
+      index = 0;
+    float maximum = 0;
+    for (float p : data)
+      if (p > maximum)  //
+        maximum = p;
+    return maximum;
+  }
+};
+
+// ???
+struct ShortTermPeak {
+  std::vector<float> data;
+  unsigned index{0};
+  float maximum{0};
+
+  void set(float seconds) {
+    data.clear();
+    data.resize(int(seconds * SAMPLE_RATE) + 1);
+  }
+
+  float operator()(float f) {
+    data[index] = abs(f);
+    if (data[index] > maximum)  //
+      maximum = data[index];
+    float returnValue = maximum;
+    index++;
+    if (index == data.size()) {
+      index = 0;
+      maximum = 0;
+    }
     return returnValue;
   }
 };

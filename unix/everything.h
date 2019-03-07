@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"
 
@@ -33,6 +35,7 @@ float uniform(float low, float high) {
 }
 
 void say(float f) { printf("%f\n", f); }
+void say(float f, float v) { printf("%f,%f\n", f, v); }
 
 }  // namespace diy
 
