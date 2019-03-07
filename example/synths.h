@@ -113,6 +113,8 @@ struct DCblock {
   }
 };
 
+// one sample delay; to mimic Max's [gen~ ] object
+// not really used...
 struct History {
   float _value = 0;
   float operator()(float value) {
