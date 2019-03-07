@@ -452,11 +452,23 @@ struct DelayLine : Array {
 
   // z-operator is in samples
   //
-  float read(float delayTime /* seconds */) {
-    float index = next - delayTime * SAMPLE_RATE;
+  float z(float delay) {
+    float index = next - delay;
     if (index < 0)  //
       index += size();
     return get(index);
+  }
+
+  // integer based lookup
+  float z(int delay) {
+    int index = next - delay;
+    if (index < 0)  //
+      index += size();
+    return at(index);
+  }
+
+  float read(float delayTime /* seconds */) {
+    return z(delayTime * SAMPLE_RATE);
   }
 };
 
@@ -693,12 +705,14 @@ struct Table : Phasor, Array {
 struct SoundPlayer : Phasor, Array {
   float sampleRate;
 
-  void load(float* _data, int frameCount, float _sampleRate) {
-    resize(frameCount);
-    for (int i = 0; i < frameCount; ++i) at(i) = _data[i];
-    sampleRate = _sampleRate;
-    rate(1);
-  }
+  /*
+    void load(float* _data, int frameCount, float _sampleRate) {
+      resize(frameCount);
+      for (int i = 0; i < frameCount; ++i) at(i) = _data[i];
+      sampleRate = _sampleRate;
+      rate(1);
+    }
+    */
 
   void rate(float ratio) { period((size() / sampleRate) / ratio); }
 
