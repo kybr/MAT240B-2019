@@ -4,6 +4,9 @@ using namespace al;
 #include "synths.h"
 using namespace diy;
 
+#include <vector>
+using namespace std;
+
 struct Comb {
   float delay{0}, gain{1}, forward{0}, back{0};
   DelayLine input, output;
@@ -32,10 +35,13 @@ struct Comb {
 struct MyApp : App {
   SoundPlayer soundPlayer;
 
-  Comb comb;
+  vector<Comb> comb;
 
   void onCreate() override {
-    comb.set(1 / 200.0, 0.5, 0.85, 0.85);
+    comb.resize(6);
+    for (int i = 0; i < comb.size(); ++i) {
+      comb[i].set(1 / (mtof(23 + i * 12)), 0.5, 0.85, 0.85);
+    }
     soundPlayer.load("../sound/sine-sweep.wav");
     soundPlayer.sampleRate = 44100;
     soundPlayer.rate(1);
@@ -46,7 +52,11 @@ struct MyApp : App {
   void onSound(AudioIOData& io) override {
     while (io()) {
       float f = soundPlayer();
-      f = comb(f);
+      float v = 0;
+      for (auto& c : comb) {
+        v += c(f);
+      }
+      f = v / (3 * 6);
       recording(f);
       io.out(0) = f;
       io.out(1) = f;
