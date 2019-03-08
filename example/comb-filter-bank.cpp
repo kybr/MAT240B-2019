@@ -7,40 +7,58 @@ using namespace diy;
 #include <vector>
 using namespace std;
 
-struct Comb {
-  float delay{0}, gain{1}, forward{0}, back{0};
-  DelayLine input, output;
+struct CombBank {
+  float gain{1}, feedforward{0}, feedback{0};
+  DelayLine input;
 
-  Comb(float capacity = 0.5 /* a good or bad thing? */) {
+  vector<float> delay;
+  vector<DelayLine> output;
+  vector<float> out;
+
+  CombBank(int delayCount = 6, float capacity = 0.5) {
     input.resize(SAMPLE_RATE * capacity);
-    output.resize(SAMPLE_RATE * capacity);
+    delay.resize(delayCount);
+    out.resize(delayCount);
+    output.resize(delayCount);
+    for (auto& dl : output) {
+      dl.resize(SAMPLE_RATE * capacity);
+    }
   }
 
-  void set(float d, float g, float ff, float fb) {
-    delay = d;
+  void set(float g, float ff, float fb) {
     gain = g;
-    forward = ff;
-    back = fb;
+    feedforward = ff;
+    feedback = fb;
   }
 
   float operator()(float in) {
-    float out = 0;
-    out = gain * in + forward * input.read(delay) + back * output.read(delay);
+    for (int i = 0; i < delay.size(); ++i) {
+      out[i] = gain * in + feedforward * input.read(delay[i]) +
+               feedback * output[i].read(delay[i]);
+    }
+
     input.write(in);
-    output.write(out);
-    return out;
+    for (int i = 0; i < delay.size(); ++i) {
+      output[i].write(out[i]);
+    }
+
+    float sum = 0;
+    for (int i = 0; i < delay.size(); ++i) {
+      sum += out[i];
+    }
+    return sum;
   }
 };
 
 struct MyApp : App {
   SoundPlayer soundPlayer;
 
-  vector<Comb> comb;
+  CombBank combBank;
 
   void onCreate() override {
-    comb.resize(6);
-    for (int i = 0; i < comb.size(); ++i) {
-      comb[i].set(1 / (mtof(23 + i * 12)), 0.5, 0.85, 0.85);
+    combBank.set(0.5, 0.85, 0.85);
+    for (int i = 0; i < combBank.delay.size(); ++i) {
+      combBank.delay[i] = 1 / mtof(23 + i * 12);
     }
     soundPlayer.load("../sound/sine-sweep.wav");
     soundPlayer.sampleRate = 44100;
@@ -52,11 +70,7 @@ struct MyApp : App {
   void onSound(AudioIOData& io) override {
     while (io()) {
       float f = soundPlayer();
-      float v = 0;
-      for (auto& c : comb) {
-        v += c(f);
-      }
-      f = v / (3 * 6);
+      f = combBank(f) / (3 * combBank.delay.size());
       recording(f);
       io.out(0) = f;
       io.out(1) = f;
