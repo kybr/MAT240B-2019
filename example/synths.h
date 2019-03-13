@@ -703,7 +703,7 @@ struct Table : Phasor, Array {
 };
 
 struct SoundPlayer : Phasor, Array {
-  float sampleRate;
+  float sampleRate {SAMPLE_RATE}; // XXX aaaaah; yikes. MURDER. fix this
 
   /*
     void load(float* _data, int frameCount, float _sampleRate) {
