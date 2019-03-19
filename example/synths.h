@@ -257,6 +257,8 @@ struct OnePole {
 };
 
 struct Array : std::vector<float> {
+  int sampleRate{SAMPLE_RATE};
+
   void operator()(float f) {
     push_back(f);
     //
@@ -266,7 +268,7 @@ struct Array : std::vector<float> {
     format.channels = 1;
     format.container = drwav_container_riff;
     format.format = DR_WAVE_FORMAT_IEEE_FLOAT;
-    format.sampleRate = 44100;
+    format.sampleRate = sampleRate;
     format.bitsPerSample = 32;
     drwav* pWav = drwav_open_file_write(fileName, &format);
     if (pWav == nullptr) {
@@ -286,6 +288,8 @@ struct Array : std::vector<float> {
   bool load(const char* fileName) {
     drwav* pWav = drwav_open_file(fileName);
     if (pWav == nullptr) return false;
+
+    sampleRate = pWav->sampleRate;
 
     if (pWav->channels == 1) {
       resize(pWav->totalPCMFrameCount);
@@ -703,17 +707,6 @@ struct Table : Phasor, Array {
 };
 
 struct SoundPlayer : Phasor, Array {
-  float sampleRate {SAMPLE_RATE}; // XXX aaaaah; yikes. MURDER. fix this
-
-  /*
-    void load(float* _data, int frameCount, float _sampleRate) {
-      resize(frameCount);
-      for (int i = 0; i < frameCount; ++i) at(i) = _data[i];
-      sampleRate = _sampleRate;
-      rate(1);
-    }
-    */
-
   void rate(float ratio) { period((size() / sampleRate) / ratio); }
 
   virtual float operator()() {

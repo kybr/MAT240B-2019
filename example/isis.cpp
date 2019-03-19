@@ -23,8 +23,13 @@ struct ISIS {
 
   float operator()(float f) {
     // direct "don't even know what this does" (Auto)GenExpr -> C++ translation
+
+    // History history_1(0);
+    // float asin_2 = asin(history_1);
     float asin_2 = asin(_);
+    // div_3 = in2 / samplerate;
     float div_3 = carrier / SAMPLE_RATE;
+    // asin_4 = asin(in1);
     float asin_4 = asin(f);
     float sub_5 = asin_4 - asin_2;
     float mul_6 = sub_5 * SAMPLE_RATE;
@@ -36,15 +41,18 @@ struct ISIS {
     phasor.frequency(mul_10);
     float phasor_11 = phasor();
     // float cycle_12, cycleindex_13 = cycle(phasor_11, index = "phase");
-    float cycle_12 = sin(M_2PI * phasor_11); // sine(phasor_11);
+    float cycle_12 = sin(M_2PI * phasor_11);  // sine(phasor_11);
     float add_14 = phasor_11 + asin_2;
     // float wrap_15 = wrap(add_14, 0, 1);
     float wrap_15 =
         add_14 > 1 ? add_14 - 1 : (add_14 < 0 ? add_14 + 1 : add_14);
     // float cycle_16, cycleindex_17 = cycle(wrap_15, index = "phase");
-    float cycle_16 = sin(M_2PI * wrap_15); // sine(wrap_15);
+    float cycle_16 = sin(M_2PI * wrap_15);  // sine(wrap_15);
     float sub_18 = cycle_16 - cycle_12;
     float out1 = sub_18;
+
+    // history_1_next_19 = fixdenorm(in1);
+    // history_1 = history_1_next_19;
 
     // fixdenormal
     if (f != 0 && std::fabsf(f) < std::numeric_limits<float>::min()) {
