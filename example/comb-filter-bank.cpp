@@ -8,45 +8,41 @@ using namespace diy;
 using namespace std;
 
 struct CombBank {
-  float gain{1}, feedforward{0}, feedback{0};
-  DelayLine input;
+  float gain{1};
+  DelayLine delayLine;
 
-  vector<float> delay;
-  vector<DelayLine> output;
-  vector<float> out;
+  struct Thing {
+    float feedforward;
+    float feedback;
+    float delayTime;
+    float output;
+    DelayLine delayLine;
+  };
 
-  CombBank(int delayCount = 6, float capacity = 0.5) {
-    input.resize(SAMPLE_RATE * capacity);
-    delay.resize(delayCount);
-    out.resize(delayCount);
-    output.resize(delayCount);
-    for (auto& dl : output) {
-      dl.resize(SAMPLE_RATE * capacity);
-    }
-  }
+  vector<Thing> thing;
 
-  void set(float g, float ff, float fb) {
-    gain = g;
-    feedforward = ff;
-    feedback = fb;
+  void add(float gain, float delayTime) {
+    thing.push_back({gain, gain, delayTime, 0});
   }
 
   float operator()(float in) {
-    for (int i = 0; i < delay.size(); ++i) {
-      out[i] = gain * in + feedforward * input.read(delay[i]) +
-               feedback * output[i].read(delay[i]);
+    for (int i = 0; i < thing.size(); ++i) {
+      thing[i].output =
+          in * gain +
+          thing[i].feedforward * delayLine.read(thing[i].delayTime) +
+          thing[i].feedback * thing[i].delayLine.read(thing[i].delayTime);
     }
 
-    input.write(in);
-    for (int i = 0; i < delay.size(); ++i) {
-      output[i].write(out[i]);
+    delayLine.write(in);
+    for (int i = 0; i < thing.size(); ++i) {
+      thing[i].delayLine.write(thing[i].output);
     }
 
     float sum = 0;
-    for (int i = 0; i < delay.size(); ++i) {
-      sum += out[i];
+    for (int i = 0; i < thing.size(); ++i) {
+      sum += thing[i].output;
     }
-    return sum;
+    return sum / thing.size();
   }
 };
 
@@ -56,11 +52,15 @@ struct MyApp : App {
   CombBank combBank;
 
   void onCreate() override {
-    combBank.set(0.5, 0.85, 0.85);
-    for (int i = 0; i < combBank.delay.size(); ++i) {
-      combBank.delay[i] = 1 / mtof(23 + i * 12);
+    // configuration
+    combBank.gain = 0.13;
+    for (int i = 37; i < 120; i += 12) {
+      for (int o : {0, 3, 7}) {
+        combBank.add(0.93, 1 / mtof(i + o));
+      }
     }
-    soundPlayer.load("../sound/sine-sweep.wav");
+
+    soundPlayer.load("../sound/9.wav");
     soundPlayer.sampleRate = 44100;
     soundPlayer.rate(1);
   }
@@ -70,7 +70,7 @@ struct MyApp : App {
   void onSound(AudioIOData& io) override {
     while (io()) {
       float f = soundPlayer();
-      f = combBank(f) / (3 * combBank.delay.size());
+      f = combBank(f) / 3;
       recording(f);
       io.out(0) = f;
       io.out(1) = f;
