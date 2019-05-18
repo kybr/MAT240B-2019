@@ -1,9 +1,12 @@
-#ifndef __240C_SYNTHS__
-#define __240C_SYNTHS__
+#pragma once
+
+//#ifndef __240C_SYNTHS__
+//#define __240C_SYNTHS__
 
 // C++ STD library
 #include <chrono>
 #include <iostream>
+#include <string>
 #include <vector>
 // no; let the std:: stand out
 // using namespace std;
@@ -28,17 +31,18 @@ const int INPUT_CHANNELS = 2;
 // xx HELPER FUNCTIONS
 // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-float map(float value, float low, float high, float Low, float High) {
+inline float map(float value, float low, float high, float Low, float High) {
   return Low + (High - Low) * ((value - low) / (high - low));
 }
-float norm(float v, float low, float high) { return map(v, low, high, 0, 1); }
-float lerp(float a, float b, float t) { return (1 - t) * a + t * b; }
-float mtof(float m) { return 8.175799f * powf(2.0f, m / 12.0f); }
-float ftom(float f) { return 12.0f * log2f(f / 8.175799f); }
-float dbtoa(float db) { return 1.0f * powf(10.0f, db / 20.0f); }
-float atodb(float a) { return 20.0f * log10f(a / 1.0f); }
-float sigmoid(float x) { return 1 / (1 + expf(-x)); }
-float sigmoid_bipolar(float x) { return 2 * sigmoid(x) - 1; }
+inline float norm(float value, float low, float high) {
+  return (value - low) / (high - low);
+}
+inline float lerp(float a, float b, float t) { return (1.0f - t) * a + t * b; }
+inline float mtof(float m) { return 8.175799f * powf(2.0f, m / 12.0f); }
+inline float ftom(float f) { return 12.0f * log2f(f / 8.175799f); }
+inline float dbtoa(float db) { return 1.0f * powf(10.0f, db / 20.0f); }
+inline float atodb(float a) { return 20.0f * log10f(a / 1.0f); }
+inline float sigmoid(float x) { return 2.0f / (1.0f + expf(-x)) - 1.0f; }
 
 float saw(float phase) { return phase * 2 - 1; }
 float rect(float phase) { return phase < 0.5 ? -1 : 1; }
@@ -263,6 +267,7 @@ struct Array : std::vector<float> {
     push_back(f);
     //
   }
+  void save(const std::string& fileName) const { save(fileName.c_str()); }
   void save(const char* fileName) const {
     drwav_data_format format;
     format.channels = 1;
@@ -285,6 +290,7 @@ struct Array : std::vector<float> {
     drwav_close(pWav);
   }
 
+  bool load(const std::string& fileName) { return load(fileName.c_str()); }
   bool load(const char* fileName) {
     drwav* pWav = drwav_open_file(fileName);
     if (pWav == nullptr) return false;
@@ -930,4 +936,4 @@ struct Rect : QuasiBandlimited {
 };
 
 }  // namespace diy
-#endif  // __240C_SYNTHS__
+//#endif  // __240C_SYNTHS__

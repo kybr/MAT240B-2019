@@ -1,6 +1,3 @@
-#include "Gamma/SoundFile.h"
-using namespace gam;
-
 #include "al/core.hpp"
 #include "al/util/ui/al_ControlGUI.hpp"
 #include "al/util/ui/al_Parameter.hpp"
@@ -11,14 +8,15 @@ using namespace al;
 using namespace diy;
 
 #include <forward_list>
+#include <string>
 #include <unordered_set>
 #include <vector>
 using namespace std;
 
-struct FloatPair {
-  float l, r;
-};
-
+// this special container for grains offers O(1) complexity for
+// getting some inactive grain (for recycling) and O(n) complexity
+// for deactivating completed grains.
+//
 template <typename T>
 class Bag {
   forward_list<T*> remove, inactive;
@@ -64,9 +62,9 @@ class Bag {
   }
 };
 
-vector<Array> arrayList;
-
 struct Granulator {
+  vector<diy::Array> arrayList;
+
   // knows how to load a file into the granulator
   //
   void load(string fileName) {
@@ -74,35 +72,14 @@ struct Granulator {
     searchPaths.addSearchPath("..");
 
     string filePath = searchPaths.find(fileName).filepath();
-    SoundFile soundFile;
-    soundFile.path(filePath);
-    if (!soundFile.openRead()) {
-      cout << "We could not read " << fileName << "!" << endl;
-      exit(1);
-    }
-    if (soundFile.channels() != 1) {
-      cout << fileName << " is not a mono file" << endl;
-      exit(1);
-    }
-
     arrayList.emplace_back();
-    Array a(arrayList.back());
-    a.resize(soundFile.frames());
-    soundFile.read(a.data(), a.size());
-    this->soundClip.push_back(&a);
-
-    // Array* a = new Array();
-    // a->size = soundFile.frames();
-    // a->data = new float[a->size];
-    // soundFile.read(a->data, a->size);
-    // this->soundClip.push_back(a);
-
-    soundFile.close();
+    if (arrayList.back().load(filePath)) {
+      printf("Loaded %s! at %08X with size %lu\n", filePath.c_str(),
+             &arrayList.back(), arrayList.back().size());
+    } else {
+      exit(1);
+    }
   }
-
-  // we keep a set of sound clips in memory so grains may use them
-  //
-  vector<Array*> soundClip;
 
   // we define a Grain...
   //
@@ -112,10 +89,7 @@ struct Granulator {
     AttackDecay envelop;  // new class handles the fade in/out and amplitude
     float pan;
 
-    float operator()() {
-      // the next sample from the grain is taken from the source buffer
-      return envelop() * source->get(index());
-    }
+    float operator()() { return source->get(index()) * envelop(); }
   };
 
   // we store a "pool" of grains which may or may not be active at any time
@@ -153,7 +127,7 @@ struct Granulator {
   //
   void recycle(Grain& g) {
     // choose which sound clip this grain pulls from
-    g.source = soundClip[whichClip];
+    g.source = &arrayList[whichClip];
 
     // startTime and endTime are in units of sample
     float startTime = g.source->size() * startPosition;
@@ -172,7 +146,7 @@ struct Granulator {
 
   // make the next sample
   //
-  FloatPair operator()() {
+  diy::FloatPair operator()() {
     // figure out if we should generate (recycle) more grains; then do so.
     //
     grainBirth.frequency(birthRate);
@@ -216,6 +190,13 @@ struct MyApp : App {
     granulator.load("8.wav");
 
     gui.init();
+    /*
+    gui.addr(presetHandler,  //
+             granulator.whichClip, granulator.grainDuration,
+             granulator.startPosition, granulator.peakPosition,
+             granulator.amplitudePeak, granulator.panPosition,
+             granulator.playbackRate, granulator.birthRate);
+            */
     gui << presetHandler  //
         << granulator.whichClip << granulator.grainDuration
         << granulator.startPosition << granulator.peakPosition
@@ -248,9 +229,9 @@ struct MyApp : App {
 
   void onSound(AudioIOData& io) override {
     while (io()) {
-      FloatPair p = granulator();
-      io.out(0) = p.l;
-      io.out(1) = p.r;
+      diy::FloatPair p = granulator();
+      io.out(0) = p.left;
+      io.out(1) = p.right;
     }
   }
 };
