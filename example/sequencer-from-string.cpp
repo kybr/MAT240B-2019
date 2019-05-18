@@ -8,30 +8,30 @@ using namespace al;
 using namespace diy;
 
 #include <queue>  // gets us priority_queue
+#include <regex>
 #include <string>
 using namespace std;
 
+const float TEMPO = 156;
+
+struct MegaEvent {
+  struct Basic {
+    double when;
+    long type;
+  };
+  double parameter[10];
+};
+
 struct Event {
-  double when;
+  double when;  // in seconds since the audio callback started
   float frequency;
-  float decayTime;
+  float gain;
+  float duration;
 
-  // XXX there's a LOT of stuff we could put in here. every synth we've seen
-  // has a different interface. most support the notion of frequency. many
-  // synthesis parameters such as envelope parameters or duration may depend on
-  // the "clock".
-  //
-
-  // priority_queue needs a way to compare Event objects so it can put them in
-  // the right order. defining the method below is one way to accomplish this.
-  //
   int operator<(const Event& other) const {
     // > or < determines ordering!
     return when > other.when;
   }
-  // this means we can compare Event objects like this:
-  // Event a, b;
-  // if (a < b) {...}
 };
 
 struct StringBank {
@@ -46,110 +46,93 @@ struct StringBank {
     return s;
   }
 
-  void trigger(float frequency, float decayTime) {
+  void trigger(float frequency, float decayTime, float gain = 1) {
     pluckedString[index].set(frequency, decayTime);
-    pluckedString[index].pluck();
+    pluckedString[index].pluck(gain);
     index++;
     if (index == N) index = 0;
   }
 };
 
-// our Thing only loops a list of midi note numbers. we can imagine something
-// more interesting:
-// - maintain a local notion of time
-// - extract note durations
-// - extract note levels
-// - don't loop; call a function when done
-//
-struct Thing {
-  vector<int> data;
+struct Pattern {
+  struct Triple {
+    float frequency;
+    float duration;
+    float gain;
+  };
+  vector<Triple> data;
   int index = 0;
 
-  // with this function we extract information from a string to construct a
-  // generator thing that outputs patterns. later this might use more
-  // sophisticated tools such as regular expressions.
-  //
+  double when{0};
+
   void load(string pattern) {
-    stringstream s(pattern);
-    data.clear();
-    string token;
-    while (getline(s, token, ' '))  //
-      data.push_back(stoi(token));
-    for (auto i : data) printf("%d ", i);
-    printf("\n");
+    regex re(R"((\d+) (\d) (\d))");
+    auto begin = std::sregex_iterator(pattern.begin(), pattern.end(), re);
+    auto end = std::sregex_iterator();
+
+    for (sregex_iterator i = begin; i != end; ++i) {
+      smatch match = *i;
+
+      int midi = stoi(match[1].str());
+      int divisor = stoi(match[2].str());
+      int level = stoi(match[3].str());
+
+      float beatsPerMinute = TEMPO;
+      float beatsPerSecond = beatsPerMinute / 60;
+      float secondsPerBeat = 1 / beatsPerSecond;
+      float secondsPerWhole = 4 * secondsPerBeat;
+      float duration = secondsPerWhole / divisor;
+
+      float gain = dbtoa(diy::map(level, 0, 9, -20, 0));
+
+      data.push_back({mtof(midi), duration, gain});
+    }
   }
 
-  int operator()() {
-    int returnValue = data[index];
+  Event operator()() {
+    Triple& triple = data[index];  //
+
+    float time = when;
+
+    // advance stuff; update state
+    when += triple.duration;
     index++;
     if (index == data.size()) index = 0;
-    return returnValue;
+
+    // return pair
+    return {time, triple.frequency, triple.gain, 0.9};
   }
 };
 
 struct MyApp : App {
   priority_queue<Event> eventList;
-
-  DelayModulation delayModulation;
   StringBank stringBank;
-  Edge edge;
-  Thing thing;
+  Pattern p;
+  DelayModulation delayModulation;
   Echo echo;
 
   void onCreate() override {
-    delayModulation.set(0.3, 0.005);
-    echo.period(0.72);
-    edge.period(0.35);
-    thing.load("60 72 60 71 59 63 62");  // we'd like this to loop
-
-    //
+    delayModulation.set(0.1, 0.005);
+    echo.period(0.8);
+    p.load("60 4 3   72 4 8   60 4 2   71 4 3   59 4 5   63 4 8   62 4 5");
   }
 
-  // this is like diy::Edge but this one has a different notion of time. it uses
-  // real (wall) time rather than sample time.
-  //
-  struct EdgeLike {
-    float period = 1;
-    float timer = 0;
-
-    bool operator()(float dt) { return fired(dt); }
-    bool fired(float dt) {
-      bool returnValue = false;
-      if (timer > period) {
-        timer -= period;
-        returnValue = true;
-      }
-      timer += dt;
-      return returnValue;
-    }
-  };
-
-  EdgeLike edgeLike{.period = 0.4};
-
-  double t = 0;
+  double now{0};
   void onAnimate(double dt) override {
-    // TODO:
-    // we'd like to access the GUI, reading from a text box, interpreting each
-    // line as a pattern. we'd like a live text-based sequencer.
-    //
-
-    if (edgeLike(dt)) {
-      float f = mtof(thing());
-      eventList.push({.when = t, .frequency = f, .decayTime = 3});
+    while (p.when < now) {
+      eventList.push(p());
     }
-
-    t += dt;
   }
 
   Array a;
   void onSound(AudioIOData& io) override {
-    static double now = 0;
-
     while (io()) {
+      // check the scheduler
+      //
       while (!eventList.empty()) {
         const Event& e = eventList.top();
         if (e.when < now) {
-          stringBank.trigger(e.frequency, e.decayTime);
+          stringBank.trigger(e.frequency, e.duration, e.gain);
           eventList.pop();
         } else
           break;
@@ -158,8 +141,7 @@ struct MyApp : App {
       float f = stringBank();
 
       f = delayModulation(f);
-
-      f += echo(f * 0.66);
+      f += echo(f / 5);
 
       io.out(0) = f;
       io.out(1) = f;

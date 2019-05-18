@@ -27,7 +27,8 @@
     "__string": "cpp",
     "regex": "cpp",
     "string": "cpp",
-    "string_view": "cpp"
+    "string_view": "cpp",
+    "unordered_set": "cpp"
   },
   "editor.formatOnSave": true,
   "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe"
